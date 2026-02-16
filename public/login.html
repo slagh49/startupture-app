@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StarRupture — Connexion</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;600;700&family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg-void:#050608;--bg-panel:#0a0c10;--bg-surface:#0f1318;
+  --amber:#e8a020;--amber-dim:#8a5c0e;--amber-glow:rgba(232,160,32,0.15);
+  --red:#cc2222;--red-dim:rgba(204,34,34,0.15);
+  --text-primary:#c8cdd4;--text-dim:#4a5260;
+  --border:#1e2430;--border-amber:rgba(232,160,32,0.3);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:var(--bg-void);color:var(--text-primary);font-family:'Rajdhani',sans-serif}
+
+body{
+  display:flex;align-items:center;justify-content:center;min-height:100vh;
+  background-image:
+    radial-gradient(ellipse at 25% 60%, rgba(232,160,32,.05) 0%, transparent 55%),
+    radial-gradient(ellipse at 75% 20%, rgba(204,34,34,.06) 0%, transparent 50%);
+}
+
+/* Animated grid */
+.bg-grid{
+  position:fixed;inset:0;pointer-events:none;z-index:0;
+  background-image:
+    linear-gradient(rgba(232,160,32,.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(232,160,32,.03) 1px, transparent 1px);
+  background-size:60px 60px;
+  animation:gridshift 40s linear infinite;
+}
+@keyframes gridshift{from{background-position:0 0}to{background-position:60px 60px}}
+
+.scan{
+  position:fixed;left:0;right:0;height:2px;z-index:1;pointer-events:none;
+  background:linear-gradient(90deg,transparent,rgba(232,160,32,.12),transparent);
+  animation:scan 12s linear infinite;
+}
+@keyframes scan{0%{top:-2px}100%{top:calc(100vh + 2px)}}
+
+/* Card */
+.card{
+  position:relative;z-index:10;
+  background:var(--bg-panel);
+  border:1px solid var(--border);
+  border-radius:10px;
+  padding:44px 48px;
+  width:380px;
+  max-width:calc(100vw - 32px);
+  box-shadow:0 24px 80px rgba(0,0,0,.6), 0 0 0 1px rgba(232,160,32,.04);
+}
+.card::before{
+  content:'';position:absolute;top:0;left:12%;right:12%;height:1px;
+  background:linear-gradient(90deg,transparent,var(--amber),transparent);
+  opacity:.35;border-radius:1px;
+}
+
+/* Logo */
+.logo{text-align:center;margin-bottom:36px}
+.logo-star{
+  width:52px;height:52px;margin:0 auto 14px;
+  border:1px solid var(--amber-dim);border-radius:8px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:22px;background:var(--amber-glow);position:relative;
+}
+.logo-star::after{
+  content:'';position:absolute;inset:-1px;border-radius:8px;
+  box-shadow:0 0 20px rgba(232,160,32,.18);
+  animation:glow 3s ease-in-out infinite;
+}
+@keyframes glow{0%,100%{opacity:.4}50%{opacity:1}}
+.logo h1{
+  font-family:'Orbitron',sans-serif;font-size:20px;font-weight:900;
+  color:var(--amber);letter-spacing:.18em;text-transform:uppercase;line-height:1;
+  margin-bottom:6px;
+}
+.logo p{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text-dim);letter-spacing:.3em;text-transform:uppercase}
+
+/* Form */
+.field{margin-bottom:16px}
+.label{
+  display:block;font-family:'Share Tech Mono',monospace;font-size:9px;
+  color:var(--text-dim);letter-spacing:.2em;text-transform:uppercase;margin-bottom:5px;
+}
+.input{
+  width:100%;background:var(--bg-surface);border:1px solid var(--border);
+  border-radius:5px;padding:10px 14px;font-family:'Rajdhani',sans-serif;
+  font-size:15px;color:var(--text-primary);outline:none;transition:border-color .15s,box-shadow .15s;
+}
+.input:focus{border-color:var(--border-amber);box-shadow:0 0 0 3px rgba(232,160,32,.07)}
+.input::placeholder{color:var(--text-dim)}
+
+/* Error */
+.err{
+  display:flex;align-items:center;gap:8px;
+  background:var(--red-dim);border:1px solid rgba(204,34,34,.3);border-radius:4px;
+  padding:9px 12px;margin-bottom:14px;
+  font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--red);
+  letter-spacing:.06em;min-height:0;
+  transition:all .2s;
+}
+.err.hidden{display:none}
+
+/* Submit */
+.submit{
+  width:100%;padding:12px;margin-top:6px;
+  background:var(--amber-glow);border:1px solid var(--amber-dim);border-radius:5px;
+  color:var(--amber);font-family:'Rajdhani',sans-serif;font-weight:700;
+  font-size:15px;letter-spacing:.14em;text-transform:uppercase;
+  cursor:pointer;transition:all .15s;position:relative;overflow:hidden;
+}
+.submit::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(90deg,transparent,rgba(232,160,32,.08),transparent);
+  transform:translateX(-100%);transition:transform .4s;
+}
+.submit:hover{background:rgba(232,160,32,.22);border-color:var(--amber);box-shadow:0 0 16px rgba(232,160,32,.18)}
+.submit:hover::before{transform:translateX(100%)}
+.submit:active{transform:scale(.98)}
+.submit:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.submit.loading::after{
+  content:'';display:inline-block;width:12px;height:12px;
+  border:2px solid rgba(232,160,32,.3);border-top-color:var(--amber);
+  border-radius:50%;animation:spin .8s linear infinite;margin-left:8px;vertical-align:middle;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Footer */
+.footer{
+  margin-top:20px;text-align:center;
+  font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text-dim);
+  letter-spacing:.12em;line-height:2;
+}
+</style>
+</head>
+<body>
+<div class="bg-grid"></div>
+<div class="scan"></div>
+
+<div class="card">
+  <div class="logo">
+    <div class="logo-star">🌟</div>
+    <h1>StarRupture</h1>
+    <p>Arcadia-7 · Système cartographique</p>
+  </div>
+
+  <div class="err hidden" id="errBox">⚠ <span id="errMsg">Identifiants incorrects</span></div>
+
+  <div class="field">
+    <label class="label" for="username">Identifiant</label>
+    <input class="input" id="username" type="text" placeholder="Nom de forçat" autocomplete="username" autofocus>
+  </div>
+  <div class="field">
+    <label class="label" for="password">Mot de passe</label>
+    <input class="input" id="password" type="password" placeholder="••••••••" autocomplete="current-password">
+  </div>
+
+  <button class="submit" id="submitBtn">ACCÉDER AU SYSTÈME</button>
+
+  <div class="footer">
+    RUPTURA ACTIVE · CONNEXION CHIFFRÉE · ARCADIA-7
+  </div>
+</div>
+
+<script>
+// Read ?next= param to redirect after login
+const params = new URLSearchParams(location.search);
+const nextUrl = params.get('next') || '/';
+
+// Show error from redirect params
+if (params.get('err') === 'forbidden') {
+  showErr('Accès réservé aux administrateurs');
+}
+
+const usernameEl = document.getElementById('username');
+const passwordEl = document.getElementById('password');
+const submitBtn  = document.getElementById('submitBtn');
+
+submitBtn.addEventListener('click', doLogin);
+passwordEl.addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+usernameEl.addEventListener('keydown', e => { if (e.key === 'Enter') passwordEl.focus(); });
+
+// Clear error on typing
+[usernameEl, passwordEl].forEach(el =>
+  el.addEventListener('input', () => document.getElementById('errBox').classList.add('hidden'))
+);
+
+async function doLogin() {
+  const username = usernameEl.value.trim();
+  const password = passwordEl.value;
+  if (!username || !password) { showErr('Remplissez tous les champs.'); return; }
+
+  submitBtn.disabled = true;
+  submitBtn.classList.add('loading');
+  submitBtn.textContent = 'CONNEXION';
+
+  try {
+    const res = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ username, password })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Identifiants incorrects');
+
+    // Cookie set by server, redirect
+    window.location.href = nextUrl;
+
+  } catch (e) {
+    showErr(e.message || 'Identifiants incorrects');
+    submitBtn.disabled = false;
+    submitBtn.classList.remove('loading');
+    submitBtn.textContent = 'ACCÉDER AU SYSTÈME';
+    passwordEl.value = '';
+    passwordEl.focus();
+  }
+}
+
+function showErr(msg) {
+  const box = document.getElementById('errBox');
+  document.getElementById('errMsg').textContent = msg;
+  box.classList.remove('hidden');
+}
+</script>
+</body>
+</html>

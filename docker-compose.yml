@@ -1,0 +1,19 @@
+services:
+  starrupture:
+    build: .
+    container_name: starrupture-map
+    restart: unless-stopped
+    ports:
+      - "${PORT:-3000}:3000"
+    volumes:
+      - starrupture-data:/data
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - DB_PATH=/data/starrupture.db
+      - JWT_SECRET=${JWT_SECRET:-change-this-secret-in-production}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin1234}
+
+volumes:
+  starrupture-data:
+    driver: local

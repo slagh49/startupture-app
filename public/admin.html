@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StarRupture — Administration</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;600;700&family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg-void:#050608;--bg-panel:#0a0c10;--bg-surface:#0f1318;--bg-elevated:#161b22;
+  --amber:#e8a020;--amber-dim:#8a5c0e;--amber-glow:rgba(232,160,32,0.15);
+  --red:#cc2222;--red-dim:rgba(204,34,34,0.2);--red-border:#442222;
+  --cyan:#1ab8b8;--green:#2a8a3a;--purple:#8833cc;
+  --text-primary:#c8cdd4;--text-dim:#4a5260;
+  --border:#1e2430;--border-amber:rgba(232,160,32,0.3);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg-void);color:var(--text-primary);font-family:'Rajdhani',sans-serif;font-size:14px;min-height:100vh;display:flex;flex-direction:column}
+
+
+/* HEADER */
+header{display:flex;align-items:center;justify-content:space-between;padding:8px 24px;background:var(--bg-panel);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100}
+header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--red),transparent);opacity:.3}
+.logo{display:flex;align-items:center;gap:10px}
+.logo-icon{width:32px;height:32px;border:1px solid #442222;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:15px;background:rgba(204,34,34,.1)}
+.logo-text h1{font-family:'Orbitron',sans-serif;font-size:13px;font-weight:900;color:var(--red);letter-spacing:.15em;text-transform:uppercase;line-height:1}
+.logo-text span{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text-dim);letter-spacing:.15em}
+.header-right{display:flex;align-items:center;gap:10px}
+.user-badge{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--amber);background:var(--amber-glow);border:1px solid var(--amber-dim);padding:3px 9px;border-radius:3px;letter-spacing:.1em}
+.btn-hdr{padding:3px 10px;background:transparent;border:1px solid var(--border);border-radius:3px;color:var(--text-dim);font-family:'Share Tech Mono',monospace;font-size:9px;cursor:pointer;transition:all .15s;letter-spacing:.08em;text-decoration:none;display:inline-flex;align-items:center}
+.btn-hdr:hover{border-color:var(--amber-dim);color:var(--amber)}
+
+/* NAV TABS */
+.admin-nav{display:flex;border-bottom:1px solid var(--border);background:var(--bg-panel);padding:0 24px;flex-shrink:0}
+.nav-tab{padding:12px 18px;background:transparent;border:none;border-bottom:2px solid transparent;color:var(--text-dim);font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:6px}
+.nav-tab.active{color:var(--red);border-bottom-color:var(--red)}
+.nav-tab:hover{color:var(--text-primary)}
+.nav-badge{font-size:9px;background:var(--bg-surface);border:1px solid var(--border);padding:1px 5px;border-radius:2px;color:var(--text-dim)}
+.nav-tab.active .nav-badge{color:var(--red);border-color:rgba(204,34,34,.4)}
+
+/* CONTENT */
+.admin-content{flex:1;padding:24px;max-width:1100px;margin:0 auto;width:100%}
+.page{display:none}.page.active{display:block}
+
+/* SECTION */
+.section{background:var(--bg-panel);border:1px solid var(--border);border-radius:6px;margin-bottom:20px;overflow:hidden}
+.section-head{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--border);background:var(--bg-elevated)}
+.section-title{font-family:'Orbitron',sans-serif;font-size:12px;font-weight:700;color:var(--text-primary);letter-spacing:.1em;text-transform:uppercase;display:flex;align-items:center;gap:8px}
+.section-title .ic{font-size:14px}
+.section-body{padding:18px}
+
+/* FORMS */
+.form-row{display:grid;gap:12px;margin-bottom:14px}
+.form-row.cols2{grid-template-columns:1fr 1fr}
+.form-row.cols3{grid-template-columns:1fr 1fr 1fr}
+.form-row.cols4{grid-template-columns:1fr 1fr 1fr auto}
+.fg{display:flex;flex-direction:column;gap:4px}
+.fl{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text-dim);letter-spacing:.15em;text-transform:uppercase}
+.fi,.fs{background:var(--bg-surface);border:1px solid var(--border);border-radius:4px;padding:7px 10px;font-family:'Rajdhani',sans-serif;font-size:13px;color:var(--text-primary);outline:none;transition:border-color .15s;width:100%;appearance:none}
+.fi:focus,.fs:focus{border-color:var(--border-amber)}
+.fs option,.fs optgroup{background:var(--bg-elevated);color:var(--text-primary)}
+.color-row{display:flex;gap:8px;align-items:center}
+.color-input{width:44px;height:34px;padding:2px;background:var(--bg-surface);border:1px solid var(--border);border-radius:4px;cursor:pointer;flex-shrink:0}
+.color-hex{flex:1}
+
+/* BUTTONS */
+.btn{padding:7px 16px;border-radius:4px;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:12px;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:6px;border:1px solid}
+.btn-amber{background:var(--amber-glow);border-color:var(--amber-dim);color:var(--amber)}
+.btn-amber:hover{background:rgba(232,160,32,.25);border-color:var(--amber);box-shadow:0 0 8px rgba(232,160,32,.15)}
+.btn-red{background:var(--red-dim);border-color:var(--red-border);color:var(--red)}
+.btn-red:hover{background:rgba(204,34,34,.35);border-color:var(--red)}
+.btn-ghost{background:transparent;border-color:var(--border);color:var(--text-dim)}
+.btn-ghost:hover{border-color:var(--amber-dim);color:var(--amber)}
+.btn-sm{padding:4px 10px;font-size:10px}
+.btn:disabled{opacity:.4;cursor:default}
+
+/* TABLE */
+table{width:100%;border-collapse:collapse}
+th{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text-dim);letter-spacing:.2em;text-transform:uppercase;padding:8px 12px;border-bottom:1px solid var(--border);text-align:left;background:var(--bg-elevated)}
+td{padding:8px 12px;border-bottom:1px solid var(--border);font-size:13px;vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--bg-elevated)}
+.td-actions{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.role-badge{font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:.08em;padding:2px 7px;border-radius:2px;text-transform:uppercase}
+.role-admin{background:rgba(204,34,34,.2);color:var(--red);border:1px solid rgba(204,34,34,.4)}
+.role-player{background:rgba(26,184,184,.2);color:var(--cyan);border:1px solid rgba(26,184,184,.4)}
+.ts{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text-dim)}
+.never{color:var(--text-dim);font-style:italic}
+
+/* RESOURCES TABLE */
+.res-color-swatch{width:14px;height:14px;border-radius:3px;display:inline-block;border:1px solid rgba(255,255,255,.1);flex-shrink:0}
+.inline-edit{display:flex;gap:6px;align-items:center}
+.res-label-edit{flex:1;background:var(--bg-surface);border:1px solid var(--border);border-radius:3px;padding:4px 8px;font-family:'Rajdhani',sans-serif;font-size:13px;color:var(--text-primary);outline:none}
+.res-label-edit:focus{border-color:var(--border-amber)}
+.cat-badge{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text-dim);background:var(--bg-elevated);border:1px solid var(--border);padding:2px 6px;border-radius:2px}
+.res-group-header td{background:var(--bg-surface);font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text-dim);letter-spacing:.2em;text-transform:uppercase;padding:6px 12px;border-bottom:1px solid var(--border)}
+
+/* LOGS */
+.log-entry{display:flex;gap:12px;padding:8px 12px;border-bottom:1px solid var(--border);align-items:flex-start;font-size:12px}
+.log-entry:last-child{border-bottom:none}
+.log-time{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text-dim);white-space:nowrap;flex-shrink:0;padding-top:1px}
+.log-user{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--amber);white-space:nowrap;flex-shrink:0;padding-top:1px;min-width:80px}
+.log-action{font-family:'Share Tech Mono',monospace;font-size:9px;padding:1px 6px;border-radius:2px;flex-shrink:0;margin-top:0}
+.log-target{font-size:11px;color:var(--text-dim);flex:1}
+.log-detail{font-size:10px;color:var(--text-dim);opacity:.7;word-break:break-all}
+.action-LOGIN{background:rgba(42,138,58,.2);color:#44cc66;border:1px solid rgba(42,138,58,.3)}
+.action-LOGOUT{background:rgba(26,184,184,.1);color:var(--cyan);border:1px solid rgba(26,184,184,.2)}
+.action-CREATE{background:rgba(232,160,32,.15);color:var(--amber);border:1px solid rgba(232,160,32,.3)}
+.action-UPDATE{background:rgba(100,100,200,.15);color:#8888ff;border:1px solid rgba(100,100,200,.3)}
+.action-DELETE{background:var(--red-dim);color:var(--red);border:1px solid rgba(204,34,34,.3)}
+.action-RESET{background:rgba(200,50,200,.15);color:#cc66cc;border:1px solid rgba(200,50,200,.3)}
+.log-filters{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:center}
+.log-filters select{background:var(--bg-surface);border:1px solid var(--border);border-radius:4px;padding:4px 8px;font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text-primary);outline:none;appearance:none;cursor:pointer}
+
+/* RESET CARDS */
+.reset-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.reset-card{background:var(--bg-surface);border:1px solid var(--border);border-radius:5px;padding:16px;display:flex;flex-direction:column;gap:10px}
+.reset-card h3{font-family:'Orbitron',sans-serif;font-size:11px;color:var(--text-primary);letter-spacing:.1em;display:flex;align-items:center;gap:6px}
+.reset-card p{font-size:12px;color:var(--text-dim);line-height:1.5;flex:1}
+.danger-zone{border-color:var(--red-border)}
+.danger-zone h3{color:var(--red)}
+
+/* CONFIRM DIALOG */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;z-index:500;display:none}
+.overlay.show{display:flex}
+.dialog{background:var(--bg-panel);border:1px solid var(--border);border-radius:6px;padding:24px;width:380px;max-width:90vw}
+.dialog h3{font-family:'Orbitron',sans-serif;font-size:13px;color:var(--red);letter-spacing:.1em;margin-bottom:10px}
+.dialog p{font-size:13px;color:var(--text-dim);line-height:1.5;margin-bottom:16px}
+.dialog-actions{display:flex;gap:8px;justify-content:flex-end}
+
+/* INLINE CONFIRM */
+.confirm-inline{background:var(--red-dim);border:1px solid var(--red-border);border-radius:4px;padding:8px 12px;margin-top:8px;display:none;font-size:12px;color:var(--text-primary);gap:8px;align-items:center;flex-wrap:wrap}
+.confirm-inline.show{display:flex}
+
+/* MISC */
+.sep{height:1px;background:var(--border);margin:14px 0}
+.text-red{color:var(--red)}
+.text-dim{color:var(--text-dim)}
+.text-amber{color:var(--amber)}
+.mt-8{margin-top:8px}
+.flex{display:flex}.gap-8{gap:8px}.items-center{align-items:center}.flex-1{flex:1}
+.pagination{display:flex;gap:6px;align-items:center;margin-top:12px;justify-content:flex-end;font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text-dim)}
+.pg-btn{padding:3px 8px;background:var(--bg-surface);border:1px solid var(--border);border-radius:3px;color:var(--text-dim);cursor:pointer;transition:all .15s}
+.pg-btn:hover{border-color:var(--amber-dim);color:var(--amber)}
+.pg-btn:disabled{opacity:.3;cursor:default}
+.empty-state{padding:32px;text-align:center;font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text-dim);letter-spacing:.15em}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(16px);background:var(--bg-elevated);border:1px solid var(--border-amber);border-radius:4px;padding:7px 16px;font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--amber);letter-spacing:.1em;opacity:0;transition:all .22s;pointer-events:none;z-index:2000}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+::-webkit-scrollbar{width:3px}::-webkit-scrollbar-track{background:var(--bg-panel)}::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+</style>
+</head>
+<body>
+
+
+<!-- HEADER -->
+<header>
+  <div class="logo">
+    <div class="logo-icon">⚙</div>
+    <div class="logo-text"><h1>Administration</h1><span>StarRupture · Arcadia-7</span></div>
+  </div>
+  <div class="header-right">
+    <span class="user-badge" id="userBadge"></span>
+    <a href="/" class="btn-hdr">← Carte</a>
+    <button class="btn-hdr" id="logoutBtn">Déconnexion</button>
+  </div>
+</header>
+
+<!-- NAV -->
+<div class="admin-nav">
+  <button class="nav-tab active" data-page="users">👥 Utilisateurs <span class="nav-badge" id="nbUsers">0</span></button>
+  <button class="nav-tab" data-page="resources">📦 Ressources <span class="nav-badge" id="nbResources">0</span></button>
+  <button class="nav-tab" data-page="logs">📋 Journaux <span class="nav-badge" id="nbLogs">0</span></button>
+  <button class="nav-tab" data-page="reset">⚠ Réinitialisation</button>
+</div>
+
+<!-- CONTENT -->
+<div class="admin-content">
+
+  <!-- ══ USERS ══ -->
+  <div class="page active" id="pageUsers">
+    <div class="section">
+      <div class="section-head">
+        <div class="section-title"><span class="ic">👥</span>Créer un utilisateur</div>
+      </div>
+      <div class="section-body">
+        <div class="form-row cols4">
+          <div class="fg"><label class="fl">Identifiant</label><input class="fi" id="newUsername" type="text" placeholder="ex: player1"></div>
+          <div class="fg"><label class="fl">Mot de passe</label><input class="fi" id="newPassword" type="password" placeholder="••••••••"></div>
+          <div class="fg"><label class="fl">Rôle</label>
+            <select class="fs" id="newRole"><option value="player">Joueur</option><option value="admin">Administrateur</option></select></div>
+          <div class="fg"><label class="fl">&nbsp;</label><button class="btn btn-amber" id="btnCreateUser">+ CRÉER</button></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-head">
+        <div class="section-title"><span class="ic">📋</span>Comptes existants</div>
+      </div>
+      <table id="usersTable">
+        <thead><tr><th>IDENTIFIANT</th><th>RÔLE</th><th>CRÉÉ LE</th><th>DERNIÈRE CONNEXION</th><th>ACTIONS</th></tr></thead>
+        <tbody id="usersTbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ══ RESOURCES ══ -->
+  <div class="page" id="pageResources">
+    <div class="section">
+      <div class="section-head">
+        <div class="section-title"><span class="ic">➕</span>Ajouter une ressource</div>
+      </div>
+      <div class="section-body">
+        <div class="form-row cols3">
+          <div class="fg"><label class="fl">ID (unique, sans espaces)</label><input class="fi" id="newResId" type="text" placeholder="ex: plasma-ore"></div>
+          <div class="fg"><label class="fl">Nom affiché</label><input class="fi" id="newResLabel" type="text" placeholder="ex: Minerai de Plasma"></div>
+          <div class="fg"><label class="fl">Catégorie</label><input class="fi" id="newResCat" type="text" placeholder="ex: Minerais bruts" list="catList"></div>
+        </div>
+        <datalist id="catList"></datalist>
+        <div class="form-row cols2">
+          <div class="fg"><label class="fl">Couleur</label>
+            <div class="color-row"><input type="color" class="color-input" id="newResColorPicker" value="#e8a020"><input class="fi color-hex" id="newResColorHex" type="text" value="#e8a020" placeholder="#rrggbb"></div></div>
+          <div class="fg"><label class="fl">&nbsp;</label><button class="btn btn-amber" id="btnAddRes" style="margin-top:4px">+ AJOUTER</button></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-head">
+        <div class="section-title"><span class="ic">📦</span>Ressources <span id="resCount" style="color:var(--amber);margin-left:6px;font-size:11px"></span></div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <input class="fi" id="resSearch" type="text" placeholder="Rechercher..." style="width:180px;padding:5px 8px;font-size:12px">
+        </div>
+      </div>
+      <table id="resTable">
+        <thead><tr><th width="14"></th><th>NOM</th><th>CATÉGORIE</th><th>COULEUR</th><th>ACTIONS</th></tr></thead>
+        <tbody id="resTbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ══ LOGS ══ -->
+  <div class="page" id="pageLogs">
+    <div class="section">
+      <div class="section-head">
+        <div class="section-title"><span class="ic">📋</span>Journal d'activité</div>
+        <button class="btn btn-ghost btn-sm" id="btnRefreshLogs">↻ Actualiser</button>
+      </div>
+      <div class="section-body" style="padding-bottom:0">
+        <div class="log-filters">
+          <span style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text-dim)">FILTRE:</span>
+          <select id="logFilterAction">
+            <option value="">Toutes actions</option>
+            <option value="LOGIN">Connexion</option>
+            <option value="CREATE">Création</option>
+            <option value="UPDATE">Modification</option>
+            <option value="DELETE">Suppression</option>
+            <option value="RESET">Réinitialisation</option>
+          </select>
+          <select id="logFilterUser"><option value="">Tous utilisateurs</option></select>
+        </div>
+      </div>
+      <div id="logsContainer"></div>
+      <div class="section-body" style="padding-top:0">
+        <div class="pagination">
+          <button class="pg-btn" id="logPrev" disabled>← Préc.</button>
+          <span id="logPageInfo">Page 1</span>
+          <button class="pg-btn" id="logNext">Suiv. →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ RESET ══ -->
+  <div class="page" id="pageReset">
+    <div class="section">
+      <div class="section-head">
+        <div class="section-title"><span class="ic">⚠</span>Réinitialisation</div>
+      </div>
+      <div class="section-body">
+        <p style="font-size:13px;color:var(--text-dim);margin-bottom:16px;line-height:1.6">
+          Ces opérations sont <strong style="color:var(--red)">irréversibles</strong>. Elles suppriment définitivement les données de la base.
+        </p>
+        <div class="reset-grid">
+          <div class="reset-card danger-zone">
+            <h3>🗺️ Vider la carte</h3>
+            <p>Supprime tous les marqueurs et tous les modules logistiques. Les utilisateurs et ressources sont conservés.</p>
+            <button class="btn btn-red" data-reset="map">VIDER LA CARTE</button>
+            <div class="confirm-inline" id="confirmMap">
+              ⚠ Confirmer la suppression de tous les marqueurs et modules ?
+              <button class="btn btn-red btn-sm" id="doResetMap">CONFIRMER</button>
+              <button class="btn btn-ghost btn-sm" id="cancelMap">Annuler</button>
+            </div>
+          </div>
+          <div class="reset-card danger-zone">
+            <h3>👥 Vider les joueurs</h3>
+            <p>Supprime tous les comptes joueurs (non-admin). Le compte admin est conservé.</p>
+            <button class="btn btn-red" data-reset="players">SUPPRIMER LES JOUEURS</button>
+            <div class="confirm-inline" id="confirmPlayers">
+              ⚠ Confirmer la suppression de tous les joueurs ?
+              <button class="btn btn-red btn-sm" id="doResetPlayers">CONFIRMER</button>
+              <button class="btn btn-ghost btn-sm" id="cancelPlayers">Annuler</button>
+            </div>
+          </div>
+          <div class="reset-card danger-zone">
+            <h3>📋 Vider les journaux</h3>
+            <p>Efface toutes les entrées du journal d'activité. Utile pour repartir à zéro en production.</p>
+            <button class="btn btn-red" data-reset="logs">VIDER LES JOURNAUX</button>
+            <div class="confirm-inline" id="confirmLogs">
+              ⚠ Confirmer la suppression des journaux ?
+              <button class="btn btn-red btn-sm" id="doResetLogs">CONFIRMER</button>
+              <button class="btn btn-ghost btn-sm" id="cancelLogs">Annuler</button>
+            </div>
+          </div>
+          <div class="reset-card">
+            <h3>🔄 Tout réinitialiser</h3>
+            <p>Vide carte + modules + joueurs + journaux. Remet l'application dans son état initial (admin conservé).</p>
+            <button class="btn btn-red" data-reset="all">RÉINITIALISATION TOTALE</button>
+            <div class="confirm-inline" id="confirmAll">
+              ⚠ TOUT sera supprimé sauf le compte admin. Continuer ?
+              <button class="btn btn-red btn-sm" id="doResetAll">CONFIRMER</button>
+              <button class="btn btn-ghost btn-sm" id="cancelAll">Annuler</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /admin-content -->
+
+<div class="toast" id="toast"></div>
+
+<!-- Reset password dialog -->
+<div class="overlay" id="pwdOverlay">
+  <div class="dialog">
+    <h3>Réinitialiser le mot de passe</h3>
+    <p>Nouveau mot de passe pour <strong id="pwdUsername"></strong></p>
+    <div class="fg" style="margin-bottom:14px"><input class="fi" id="newPwd" type="password" placeholder="Nouveau mot de passe"></div>
+    <div class="dialog-actions">
+      <button class="btn btn-ghost" id="cancelPwd">Annuler</button>
+      <button class="btn btn-amber" id="confirmPwd">Valider</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══ API ══
+const api = {
+  async get(u){ const r=await fetch(u,{credentials:'include'}); if(!r.ok) throw r; return r.json(); },
+  async post(u,d){ const r=await fetch(u,{method:'POST',headers:{'Content-Type':'application/json'},credentials:'include',body:JSON.stringify(d)}); const j=await r.json(); if(!r.ok) throw new Error(j.error||'Erreur'); return j; },
+  async put(u,d){ const r=await fetch(u,{method:'PUT',headers:{'Content-Type':'application/json'},credentials:'include',body:JSON.stringify(d)}); const j=await r.json(); if(!r.ok) throw new Error(j.error||'Erreur'); return j; },
+  async del(u){ const r=await fetch(u,{method:'DELETE',credentials:'include'}); const j=await r.json(); if(!r.ok) throw new Error(j.error||'Erreur'); return j; },
+};
+
+let currentUser=null, allResources=[], allUsers=[], allLogs=[], logPage=0, logTotal=0;
+const LOG_PAGE_SIZE=50;
+
+// ══ INIT — session validée par le serveur (admin requis) ══
+// Le serveur refuse de servir cette page si le cookie JWT est absent ou si role !== admin.
+document.getElementById('logoutBtn').addEventListener('click', async()=>{
+  await api.post('/api/auth/logout',{});
+  location.href='/login';
+});
+
+(async()=>{
+  try{
+    currentUser=await api.get('/api/auth/me');
+    document.getElementById('userBadge').textContent='⬡ '+currentUser.username.toUpperCase();
+    await loadAll();
+  }catch{
+    location.href='/login';
+  }
+})();
+
+// ══ LOAD ALL ══
+async function loadAll(){
+  [allUsers,allResources]=await Promise.all([api.get('/api/admin/users'),api.get('/api/admin/resources')]);
+  renderUsers(); renderResources(); buildCatList();
+  await loadLogs();
+}
+
+// ══ NAV ══
+document.querySelectorAll('.nav-tab').forEach(btn=>btn.addEventListener('click',()=>{
+  document.querySelectorAll('.nav-tab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page'+btn.dataset.page.charAt(0).toUpperCase()+btn.dataset.page.slice(1)).classList.add('active');
+  if(btn.dataset.page==='logs') loadLogs();
+}));
+
+// ══ USERS ══
+function renderUsers(){
+  document.getElementById('nbUsers').textContent=allUsers.length;
+  const tbody=document.getElementById('usersTbody');
+  if(!allUsers.length){ tbody.innerHTML='<tr><td colspan="5" class="empty-state">— Aucun utilisateur —</td></tr>'; return; }
+  tbody.innerHTML=allUsers.map(u=>`
+    <tr data-uid="${u.id}">
+      <td><strong>${u.username}</strong></td>
+      <td><span class="role-badge ${u.role==='admin'?'role-admin':'role-player'}">${u.role}</span></td>
+      <td class="ts">${fmtDate(u.created_at)}</td>
+      <td class="ts">${u.last_login?fmtDate(u.last_login):'<span class="never">jamais</span>'}</td>
+      <td><div class="td-actions">
+        ${u.role==='admin'?`<button class="btn btn-ghost btn-sm" onclick="promoteUser('${u.id}','player')">→ Joueur</button>`:
+                           `<button class="btn btn-ghost btn-sm" onclick="promoteUser('${u.id}','admin')">→ Admin</button>`}
+        <button class="btn btn-ghost btn-sm" onclick="openPwdDialog('${u.id}','${u.username}')">🔑 Mdp</button>
+        ${u.id!==currentUser.id?`<button class="btn btn-red btn-sm" onclick="deleteUser('${u.id}','${u.username}')">✕ Suppr.</button>`:'<span class="ts">(vous)</span>'}
+      </div></td>
+    </tr>
+  `).join('');
+}
+
+document.getElementById('btnCreateUser').addEventListener('click', async()=>{
+  const username=document.getElementById('newUsername').value.trim();
+  const password=document.getElementById('newPassword').value;
+  const role=document.getElementById('newRole').value;
+  if(!username||!password){ showToast('⚠ Remplissez tous les champs.'); return; }
+  try{
+    await api.post('/api/admin/users',{username,password,role});
+    document.getElementById('newUsername').value='';
+    document.getElementById('newPassword').value='';
+    allUsers=await api.get('/api/admin/users');
+    renderUsers(); showToast('✓ Utilisateur créé.');
+  }catch(e){ showToast('Erreur : '+e.message); }
+});
+
+async function promoteUser(id,role){
+  await api.put('/api/admin/users/'+id+'/role',{role});
+  allUsers=await api.get('/api/admin/users');
+  renderUsers(); showToast('✓ Rôle mis à jour.');
+}
+
+async function deleteUser(id,username){
+  if(!confirm('Supprimer l\'utilisateur "'+username+'" ?')) return;
+  await api.del('/api/admin/users/'+id);
+  allUsers=await api.get('/api/admin/users');
+  renderUsers(); showToast('✓ Utilisateur supprimé.');
+}
+
+// Password dialog
+let pwdTargetId=null;
+function openPwdDialog(id,username){ pwdTargetId=id; document.getElementById('pwdUsername').textContent=username; document.getElementById('newPwd').value=''; document.getElementById('pwdOverlay').classList.add('show'); }
+document.getElementById('cancelPwd').addEventListener('click',()=>document.getElementById('pwdOverlay').classList.remove('show'));
+document.getElementById('pwdOverlay').addEventListener('click',e=>{ if(e.target===document.getElementById('pwdOverlay')) document.getElementById('pwdOverlay').classList.remove('show'); });
+document.getElementById('confirmPwd').addEventListener('click',async()=>{
+  const pwd=document.getElementById('newPwd').value;
+  if(!pwd){ showToast('⚠ Entrez un mot de passe.'); return; }
+  await api.put('/api/admin/users/'+pwdTargetId+'/password',{password:pwd});
+  document.getElementById('pwdOverlay').classList.remove('show');
+  showToast('✓ Mot de passe mis à jour.');
+});
+
+// ══ RESOURCES ══
+// Sync color picker <-> hex input
+const picker=document.getElementById('newResColorPicker');
+const hexIn=document.getElementById('newResColorHex');
+picker.addEventListener('input',()=>hexIn.value=picker.value);
+hexIn.addEventListener('input',()=>{ if(/^#[0-9a-fA-F]{6}$/.test(hexIn.value)) picker.value=hexIn.value; });
+
+function buildCatList(){
+  const cats=new Set(allResources.map(r=>r.category));
+  document.getElementById('catList').innerHTML=[...cats].map(c=>`<option value="${c}">`).join('');
+}
+
+document.getElementById('resSearch').addEventListener('input',function(){ renderResources(this.value.toLowerCase()); });
+
+function renderResources(search=''){
+  const filtered=allResources.filter(r=>!search||r.label.toLowerCase().includes(search)||r.category.toLowerCase().includes(search)||r.id.includes(search));
+  document.getElementById('nbResources').textContent=allResources.length;
+  document.getElementById('resCount').textContent='('+filtered.length+'/'+allResources.length+')';
+  const tbody=document.getElementById('resTbody');
+  if(!filtered.length){ tbody.innerHTML='<tr><td colspan="5" class="empty-state">— Aucun résultat —</td></tr>'; return; }
+
+  // Group by category
+  const groups={};
+  filtered.forEach(r=>{ if(!groups[r.category]) groups[r.category]=[]; groups[r.category].push(r); });
+
+  tbody.innerHTML=Object.entries(groups).map(([cat,items])=>
+    `<tr class="res-group-header"><td colspan="5">${cat}</td></tr>`+
+    items.map(r=>`
+      <tr data-rid="${r.id}">
+        <td><span class="res-color-swatch" style="background:${r.color}"></span></td>
+        <td><input class="res-label-edit" data-rid="${r.id}" data-field="label" value="${escHtml(r.label)}" type="text"></td>
+        <td><input class="res-label-edit" data-rid="${r.id}" data-field="category" value="${escHtml(r.category)}" type="text"></td>
+        <td>
+          <div class="color-row">
+            <input type="color" class="color-input" data-rid="${r.id}" data-field="color" value="${r.color}" style="width:34px;height:28px">
+            <input class="res-label-edit color-hex" data-rid="${r.id}" data-field="colorhex" value="${r.color}" style="width:80px" type="text">
+          </div>
+        </td>
+        <td><button class="btn btn-amber btn-sm" onclick="saveResource('${r.id}')">Sauver</button></td>
+      </tr>
+    `).join('')
+  ).join('');
+
+  // Sync color picker <-> hex per row
+  tbody.querySelectorAll('input[type="color"]').forEach(cpk=>{
+    const rid=cpk.dataset.rid;
+    const hexField=tbody.querySelector(`.color-hex[data-rid="${rid}"]`);
+    cpk.addEventListener('input',()=>{ if(hexField) hexField.value=cpk.value; });
+    if(hexField) hexField.addEventListener('input',()=>{ if(/^#[0-9a-fA-F]{6}$/.test(hexField.value)) cpk.value=hexField.value; });
+  });
+}
+
+async function saveResource(id){
+  const row=document.querySelector(`tr[data-rid="${id}"]`);
+  const label=row.querySelector('[data-field="label"]').value.trim();
+  const category=row.querySelector('[data-field="category"]').value.trim();
+  const colorHex=row.querySelector('.color-hex[data-rid="'+id+'"]');
+  const colorPicker=row.querySelector('input[type="color"][data-rid="'+id+'"]');
+  const color=colorHex&&/^#[0-9a-fA-F]{6}$/.test(colorHex.value)?colorHex.value:colorPicker.value;
+  if(!label||!category||!color){ showToast('⚠ Champs manquants.'); return; }
+  await api.put('/api/admin/resources/'+id,{label,category,color});
+  // Update in-memory
+  const r=allResources.find(x=>x.id===id);
+  if(r){ r.label=label; r.category=category; r.color=color; }
+  // Update swatch in this row
+  const swatch=row.querySelector('.res-color-swatch');
+  if(swatch) swatch.style.background=color;
+  buildCatList();
+  showToast('✓ Ressource mise à jour.');
+}
+
+document.getElementById('btnAddRes').addEventListener('click',async()=>{
+  const id=document.getElementById('newResId').value.trim().toLowerCase().replace(/\s+/g,'-');
+  const label=document.getElementById('newResLabel').value.trim();
+  const category=document.getElementById('newResCat').value.trim();
+  const color=hexIn.value||picker.value;
+  if(!id||!label||!category){ showToast('⚠ Remplissez tous les champs.'); return; }
+  try{
+    await api.post('/api/admin/resources',{id,label,category,color});
+    allResources=await api.get('/api/admin/resources');
+    document.getElementById('newResId').value='';
+    document.getElementById('newResLabel').value='';
+    renderResources(); buildCatList(); showToast('✓ Ressource ajoutée.');
+  }catch(e){ showToast('Erreur : '+e.message); }
+});
+
+// ══ LOGS ══
+let logFilterAction='', logFilterUser='';
+document.getElementById('logFilterAction').addEventListener('change',function(){ logFilterAction=this.value; logPage=0; loadLogs(); });
+document.getElementById('logFilterUser').addEventListener('change',function(){ logFilterUser=this.value; logPage=0; loadLogs(); });
+document.getElementById('btnRefreshLogs').addEventListener('click',()=>loadLogs());
+document.getElementById('logPrev').addEventListener('click',()=>{ if(logPage>0){logPage--;loadLogs();} });
+document.getElementById('logNext').addEventListener('click',()=>{ if((logPage+1)*LOG_PAGE_SIZE<logTotal){logPage++;loadLogs();} });
+
+async function loadLogs(){
+  try{
+    const data=await api.get('/api/admin/logs?limit='+LOG_PAGE_SIZE+'&offset='+logPage*LOG_PAGE_SIZE);
+    allLogs=data.logs; logTotal=data.total;
+    document.getElementById('nbLogs').textContent=logTotal;
+    document.getElementById('logPageInfo').textContent='Page '+(logPage+1)+' / '+Math.max(1,Math.ceil(logTotal/LOG_PAGE_SIZE));
+    document.getElementById('logPrev').disabled=logPage===0;
+    document.getElementById('logNext').disabled=(logPage+1)*LOG_PAGE_SIZE>=logTotal;
+
+    // Populate user filter
+    const users=new Set(allLogs.map(l=>l.username).filter(Boolean));
+    const sel=document.getElementById('logFilterUser');
+    const prev=sel.value;
+    sel.innerHTML='<option value="">Tous utilisateurs</option>'+[...users].map(u=>`<option value="${u}">${u}</option>`).join('');
+    if(prev) sel.value=prev;
+
+    let filtered=allLogs;
+    if(logFilterAction) filtered=filtered.filter(l=>l.action.startsWith(logFilterAction));
+    if(logFilterUser) filtered=filtered.filter(l=>l.username===logFilterUser);
+
+    const container=document.getElementById('logsContainer');
+    if(!filtered.length){ container.innerHTML='<div class="empty-state">— Aucun événement —</div>'; return; }
+
+    container.innerHTML=filtered.map(l=>{
+      const aclass='action-'+(l.action.split('_')[0]||'OTHER');
+      return `<div class="log-entry">
+        <span class="log-time">${fmtDateFull(l.created_at)}</span>
+        <span class="log-user">${l.username||'—'}</span>
+        <span class="log-action ${aclass}">${l.action}</span>
+        <span class="log-target">${l.target||''} ${l.detail?'<span class="log-detail">'+escHtml(l.detail)+'</span>':''}</span>
+      </div>`;
+    }).join('');
+  }catch(e){ console.error(e); }
+}
+
+// ══ RESET ══
+document.querySelectorAll('[data-reset]').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.confirm-inline').forEach(c=>c.classList.remove('show'));
+    document.getElementById('confirm'+capitalize(btn.dataset.reset)).classList.add('show');
+  });
+});
+['Map','Players','Logs','All'].forEach(k=>{
+  document.getElementById('cancel'+k).addEventListener('click',()=>document.getElementById('confirm'+k).classList.remove('show'));
+});
+
+document.getElementById('doResetMap').addEventListener('click',async()=>{
+  await api.post('/api/admin/reset/map',{});
+  document.getElementById('confirmMap').classList.remove('show');
+  showToast('✓ Carte vidée.'); await loadLogs();
+});
+document.getElementById('doResetPlayers').addEventListener('click',async()=>{
+  await api.post('/api/admin/reset/players',{});
+  allUsers=await api.get('/api/admin/users');
+  renderUsers();
+  document.getElementById('confirmPlayers').classList.remove('show');
+  showToast('✓ Joueurs supprimés.'); await loadLogs();
+});
+document.getElementById('doResetLogs').addEventListener('click',async()=>{
+  await api.post('/api/admin/reset/logs',{});
+  logPage=0; await loadLogs();
+  document.getElementById('confirmLogs').classList.remove('show');
+  showToast('✓ Journaux effacés.');
+});
+document.getElementById('doResetAll').addEventListener('click',async()=>{
+  await api.post('/api/admin/reset/all',{});
+  allUsers=await api.get('/api/admin/users');
+  renderUsers(); logPage=0; await loadLogs();
+  document.getElementById('confirmAll').classList.remove('show');
+  showToast('✓ Réinitialisation totale effectuée.');
+});
+
+// ══ UTILS ══
+function fmtDate(s){ if(!s) return '—'; const d=new Date(s); return d.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric'})+' '+d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}); }
+function fmtDateFull(s){ if(!s) return '—'; const d=new Date(s); return d.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'})+' '+d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit',second:'2-digit'}); }
+function capitalize(s){ return s.charAt(0).toUpperCase()+s.slice(1); }
+function escHtml(s){ const d=document.createElement('div'); d.textContent=s||''; return d.innerHTML; }
+
+let toastTimer;
+function showToast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove('show'),2800); }
+</script>
+</body>
+</html>

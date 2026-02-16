@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StarRupture — Arcadia-7</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;600;700&family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg-void:#050608;--bg-panel:#0a0c10;--bg-surface:#0f1318;--bg-elevated:#161b22;
+  --amber:#e8a020;--amber-dim:#8a5c0e;--amber-glow:rgba(232,160,32,0.15);
+  --red:#cc2222;--red-dim:rgba(204,34,34,0.2);
+  --cyan:#1ab8b8;--green:#2a8a3a;
+  --text-primary:#c8cdd4;--text-dim:#4a5260;
+  --border:#1e2430;--border-amber:rgba(232,160,32,0.3);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg-void);color:var(--text-primary);font-family:'Rajdhani',sans-serif;font-size:14px;height:100vh;display:flex;flex-direction:column;overflow:hidden}
+
+
+/* ── HEADER ── */
+header{display:flex;align-items:center;justify-content:space-between;padding:8px 16px;background:var(--bg-panel);border-bottom:1px solid var(--border);position:relative;flex-shrink:0;z-index:100}
+header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--amber),transparent);opacity:.3}
+.logo{display:flex;align-items:center;gap:10px}
+.logo-icon{width:32px;height:32px;border:1px solid var(--amber-dim);border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:15px;background:var(--amber-glow)}
+.logo-text h1{font-family:'Orbitron',sans-serif;font-size:14px;font-weight:900;color:var(--amber);letter-spacing:.12em;text-transform:uppercase;line-height:1}
+.logo-text span{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text-dim);letter-spacing:.15em}
+.header-mid{display:flex;align-items:center;gap:14px}
+.status-chip{display:flex;align-items:center;gap:5px;font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text-dim)}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:blink 2.5s ease-in-out infinite}
+.dot.warn{background:var(--amber)}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.rupture-tag{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--red);border:1px solid var(--red);padding:2px 7px;border-radius:3px;background:var(--red-dim);animation:rpulse 4s ease-in-out infinite}
+@keyframes rpulse{0%,100%{box-shadow:0 0 0 rgba(204,34,34,0)}50%{box-shadow:0 0 8px rgba(204,34,34,.35)}}
+.header-right{display:flex;align-items:center;gap:10px}
+.user-tag{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--amber);letter-spacing:.08em}
+.header-coords{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text-dim);text-align:right;line-height:1.7;min-width:80px}
+.btn-hdr{padding:3px 10px;background:transparent;border:1px solid var(--border);border-radius:3px;color:var(--text-dim);font-family:'Share Tech Mono',monospace;font-size:9px;cursor:pointer;transition:all .15s;letter-spacing:.08em;text-decoration:none;display:inline-flex;align-items:center}
+.btn-hdr:hover{border-color:var(--amber-dim);color:var(--amber)}
+
+/* ── LAYOUT ── */
+.workspace{display:flex;flex:1;overflow:hidden}
+
+/* LEFT SIDEBAR */
+.sidebar-left{width:225px;background:var(--bg-panel);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;overflow:hidden;z-index:50}
+.sidebar-section{border-bottom:1px solid var(--border);padding:10px}
+.sidebar-section.grow{flex:1;overflow-y:auto;border-bottom:none}
+.section-label{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text-dim);letter-spacing:.25em;text-transform:uppercase;margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.section-label::after{content:'';flex:1;height:1px;background:var(--border)}
+.filter-grid{display:flex;flex-direction:column;gap:3px}
+.filter-btn{display:flex;align-items:center;gap:7px;padding:6px 9px;background:var(--bg-surface);border:1px solid var(--border);border-radius:4px;cursor:pointer;transition:all .15s;font-family:'Rajdhani',sans-serif;font-size:12px;font-weight:600;color:var(--text-dim);text-align:left;position:relative;overflow:hidden}
+.filter-btn::before{content:'';position:absolute;left:0;top:0;bottom:0;width:2px;background:var(--color,var(--border));opacity:0;transition:opacity .15s}
+.filter-btn.active{color:var(--text-primary);border-color:var(--color,var(--border));background:var(--bg-elevated)}
+.filter-btn.active::before,.filter-btn:hover::before{opacity:1}
+.filter-btn:hover{border-color:var(--color,var(--amber-dim));color:var(--text-primary)}
+.filter-icon{font-size:13px;width:18px;text-align:center}
+.filter-count{margin-left:auto;font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text-dim);background:var(--bg-panel);padding:2px 5px;border-radius:2px}
+.filter-btn.active .filter-count{color:var(--amber)}
+.marker-list{display:flex;flex-direction:column;gap:3px}
+.marker-item{padding:6px 9px;background:var(--bg-surface);border:1px solid var(--border);border-radius:4px;cursor:pointer;transition:all .15s}
+.marker-item:hover{border-color:var(--border-amber);background:var(--bg-elevated)}
+.marker-item.selected{border-color:var(--amber);background:var(--amber-glow)}
+.marker-item-header{display:flex;align-items:center;gap:5px;margin-bottom:1px}
+.mi-icon{font-size:12px}.mi-name{font-weight:600;font-size:12px;color:var(--text-primary);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mi-desc{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text-dim);padding-left:17px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.empty-list{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text-dim);text-align:center;padding:16px 0;letter-spacing:.1em}
+
+/* MAP */
+.map-container{flex:1;position:relative;overflow:hidden;background:#060a08;cursor:crosshair}
+#mapWorld{position:absolute;transform-origin:0 0}
+#mapImg{display:block;width:100%;height:100%;user-select:none;-webkit-user-drag:none}
+.map-hud{position:absolute;inset:0;pointer-events:none;z-index:20}
+.map-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(232,160,32,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(232,160,32,.04) 1px,transparent 1px);background-size:80px 80px}
+.scan-line{position:absolute;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,rgba(232,160,32,.1),transparent);animation:scan 14s linear infinite;opacity:.6}
+@keyframes scan{0%{top:-2px}100%{top:calc(100% + 2px)}}
+.map-vignette{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 50%,transparent 30%,rgba(5,6,8,.55) 100%)}
+.zoom-controls{position:absolute;bottom:16px;right:16px;display:flex;flex-direction:column;gap:4px;z-index:30;pointer-events:auto}
+.zoom-btn{width:28px;height:28px;background:var(--bg-panel);border:1px solid var(--border);border-radius:4px;color:var(--amber);font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.zoom-btn:hover{border-color:var(--amber);background:var(--amber-glow)}
+.zoom-level{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text-dim);text-align:center}
+.btn-fit{width:28px;height:20px;font-size:8px;background:var(--bg-panel);border:1px solid var(--border);border-radius:4px;color:var(--text-dim);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;font-family:'Share Tech Mono',monospace}
+.btn-fit:hover{border-color:var(--amber-dim);color:var(--amber)}
+#flowSvg{position:absolute;inset:0;pointer-events:none;z-index:22;overflow:visible}
+.flow-line{stroke-dasharray:9 6;animation:flowdash 1.1s linear infinite}
+@keyframes flowdash{to{stroke-dashoffset:-30}}
+#markersOverlay{position:absolute;inset:0;pointer-events:none;z-index:25}
+.map-marker{position:absolute;transform:translate(-50%,-100%) translateY(-4px);cursor:pointer;pointer-events:auto;transition:transform .1s,filter .1s;filter:drop-shadow(0 2px 5px rgba(0,0,0,.85))}
+.map-marker:hover{transform:translate(-50%,-100%) translateY(-4px) scale(1.25);z-index:20}
+.map-marker.highlighted{transform:translate(-50%,-100%) translateY(-4px) scale(1.2);filter:drop-shadow(0 0 8px var(--hl-color,#fff))}
+.marker-pin{width:28px;height:28px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);display:flex;align-items:center;justify-content:center;font-size:13px;border:2px solid;transition:box-shadow .15s}
+.marker-pin span{transform:rotate(45deg);display:block}
+.map-marker:hover .marker-pin,.map-marker.highlighted .marker-pin{box-shadow:0 0 14px currentColor}
+.marker-pin.rupture{background:rgba(204,34,34,.4);border-color:#ff4444;color:#ff6666}
+.marker-pin.resource{background:rgba(232,160,32,.4);border-color:#ffbe44;color:#ffe080}
+.marker-pin.base{background:rgba(26,184,184,.4);border-color:#44dddd;color:#88ffff}
+.marker-pin.alien{background:rgba(160,32,200,.4);border-color:#cc44ff;color:#ee88ff}
+.marker-pin.blueprint{background:rgba(32,100,220,.4);border-color:#4488ff;color:#88bbff}
+.marker-tooltip{position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:var(--bg-panel);border:1px solid var(--border-amber);border-radius:4px;padding:4px 8px;white-space:nowrap;font-family:'Rajdhani',sans-serif;font-size:11px;font-weight:600;color:var(--text-primary);pointer-events:none;opacity:0;transition:opacity .15s}
+.map-marker:hover .marker-tooltip{opacity:1}
+.pending-cross{position:absolute;width:16px;height:16px;border:1.5px solid var(--amber);border-radius:50%;transform:translate(-50%,-50%);pointer-events:none;z-index:30;animation:cpulse 1.5s ease-in-out infinite}
+@keyframes cpulse{0%,100%{box-shadow:0 0 0 0 rgba(232,160,32,.4)}50%{box-shadow:0 0 0 6px rgba(232,160,32,0)}}
+
+/* RIGHT SIDEBAR */
+.sidebar-right{width:295px;background:var(--bg-panel);border-left:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;z-index:50;overflow:hidden}
+.panel-tabs{display:flex;border-bottom:1px solid var(--border);flex-shrink:0}
+.tab-btn{flex:1;padding:8px 4px;background:transparent;border:none;border-bottom:2px solid transparent;color:var(--text-dim);font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;transition:all .15s}
+.tab-btn.active{color:var(--amber);border-bottom-color:var(--amber)}
+.panel-scroll{flex:1;overflow-y:auto;padding:12px}
+.form-group{margin-bottom:9px}
+.form-label{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text-dim);letter-spacing:.15em;text-transform:uppercase;margin-bottom:3px;display:block}
+.form-select,.form-input,.form-textarea{width:100%;background:var(--bg-surface);border:1px solid var(--border);border-radius:4px;padding:6px 8px;font-family:'Rajdhani',sans-serif;font-size:13px;color:var(--text-primary);outline:none;transition:border-color .15s;appearance:none}
+.form-select:focus,.form-input:focus,.form-textarea:focus{border-color:var(--border-amber)}
+.form-select option,.form-select optgroup{background:var(--bg-elevated);color:var(--text-primary)}
+.form-textarea{resize:vertical;min-height:50px;font-size:12px;line-height:1.4}
+.res-preview{display:flex;align-items:center;gap:7px;margin-top:4px;padding:5px 8px;background:var(--bg-elevated);border-radius:3px;border:1px solid var(--border);min-height:26px}
+.res-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;border:1px solid rgba(255,255,255,.1)}
+.res-lbl{font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:.05em;transition:color .2s}
+.btn-primary{width:100%;padding:8px;background:var(--amber-glow);border:1px solid var(--amber-dim);border-radius:4px;color:var(--amber);font-family:'Rajdhani',sans-serif;font-weight:700;font-size:13px;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;transition:all .15s;margin-top:8px}
+.btn-primary:hover{background:rgba(232,160,32,.25);border-color:var(--amber);box-shadow:0 0 8px rgba(232,160,32,.2)}
+.btn-primary:disabled{opacity:.4;cursor:default;box-shadow:none}
+.coords-hint{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--amber-dim);text-align:center;margin-top:5px;min-height:12px;line-height:1.5}
+.sep{height:1px;background:var(--border);margin:10px 0}
+
+/* MODULE FILTER BAR */
+.mod-filter-bar{display:flex;gap:6px;align-items:center;margin-bottom:10px;flex-wrap:wrap}
+.mod-filter-label{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text-dim);letter-spacing:.1em;flex-shrink:0}
+.mod-filter-select{flex:1;background:var(--bg-surface);border:1px solid var(--border);border-radius:4px;padding:4px 7px;font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text-primary);outline:none;appearance:none;cursor:pointer;min-width:0}
+.mod-filter-select:focus{border-color:var(--border-amber)}
+.mod-filter-select option,.mod-filter-select optgroup{background:var(--bg-elevated)}
+.mod-kind-tabs{display:flex;gap:3px;margin-bottom:8px}
+.mod-kind-tab{flex:1;padding:4px;background:var(--bg-surface);border:1px solid var(--border);border-radius:3px;color:var(--text-dim);font-family:'Share Tech Mono',monospace;font-size:9px;cursor:pointer;text-align:center;transition:all .15s;letter-spacing:.06em}
+.mod-kind-tab.active{color:var(--amber);border-color:rgba(232,160,32,.4);background:var(--amber-glow)}
+
+/* MODULE CARDS */
+.module-card{background:var(--bg-surface);border:1px solid var(--border);border-radius:5px;padding:9px 10px;margin-bottom:6px;cursor:pointer;transition:all .15s}
+.module-card:hover{border-color:var(--border-amber);background:var(--bg-elevated)}
+.module-card.selected{border-color:var(--amber);background:var(--amber-glow)}
+.module-card.hidden-mod{display:none}
+.mc-head{display:flex;align-items:center;gap:6px;margin-bottom:5px}
+.mbadge{font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:.06em;text-transform:uppercase;padding:2px 6px;border-radius:2px;flex-shrink:0}
+.mbadge-send{background:rgba(232,160,32,.2);color:var(--amber);border:1px solid rgba(232,160,32,.4)}
+.mbadge-recv{background:rgba(26,184,184,.2);color:var(--cyan);border:1px solid rgba(26,184,184,.4)}
+.mc-name{font-weight:700;font-size:12px;color:var(--text-primary);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mc-meta{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text-dim);line-height:1.9}
+.mc-meta b{color:var(--text-primary)}
+.resdot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:4px;vertical-align:middle}
+.mc-link{display:inline-flex;align-items:center;gap:4px;margin-top:4px;font-family:'Share Tech Mono',monospace;font-size:9px;padding:2px 7px;border-radius:2px;background:rgba(232,160,32,.08);color:var(--amber);border:1px solid rgba(232,160,32,.3)}
+.btn-danger{width:100%;padding:6px;background:transparent;border:1px solid #442222;border-radius:4px;color:#883333;font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;transition:all .15s;margin-top:6px}
+.btn-danger:hover{background:var(--red-dim);border-color:var(--red);color:var(--red)}
+.btn-icon-del{padding:2px 7px;background:transparent;border:1px solid #442222;border-radius:3px;color:#883333;font-family:'Share Tech Mono',monospace;font-size:9px;cursor:pointer;transition:all .15s;flex-shrink:0}
+.btn-icon-del:hover{background:var(--red-dim);border-color:var(--red);color:var(--red)}
+.mod-sec-title{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text-dim);letter-spacing:.2em;text-transform:uppercase;margin:10px 0 5px}
+.detail-type-tag{display:inline-flex;align-items:center;gap:5px;font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:.15em;text-transform:uppercase;padding:3px 8px;border-radius:2px;margin-bottom:8px}
+.detail-name{font-family:'Orbitron',sans-serif;font-size:13px;font-weight:700;color:var(--text-primary);margin-bottom:6px;line-height:1.3}
+.detail-coords{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text-dim);margin-bottom:5px}
+.detail-desc{font-size:12px;color:var(--text-primary);line-height:1.5;margin-bottom:10px;opacity:.8}
+.detail-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:8px;opacity:.3}
+.de-icon{font-size:28px}
+.de-text{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text-dim);letter-spacing:.18em;text-transform:uppercase;text-align:center;line-height:2}
+.flow-legend{padding:7px 12px;border-top:1px solid var(--border);display:flex;gap:12px;flex-wrap:wrap;flex-shrink:0}
+.leg-item{display:flex;align-items:center;gap:5px;font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text-dim)}
+.leg-line{width:22px;height:2px;border-radius:1px}
+.statusbar{display:flex;align-items:center;gap:12px;padding:4px 16px;background:var(--bg-panel);border-top:1px solid var(--border);flex-shrink:0;z-index:100}
+.sb-item{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text-dim);display:flex;align-items:center;gap:4px}
+.sb-item span{color:var(--amber)}
+.sb-sep{width:1px;height:10px;background:var(--border)}
+.ml-auto{margin-left:auto}
+.toast{position:fixed;bottom:36px;left:50%;transform:translateX(-50%) translateY(16px);background:var(--bg-elevated);border:1px solid var(--border-amber);border-radius:4px;padding:7px 16px;font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--amber);letter-spacing:.1em;opacity:0;transition:all .22s;pointer-events:none;z-index:2000}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+::-webkit-scrollbar{width:3px}::-webkit-scrollbar-track{background:var(--bg-panel)}::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+@keyframes fadeFlash{0%{opacity:1;transform:translate(-50%,-50%) scale(.5)}100%{opacity:0;transform:translate(-50%,-50%) scale(2.5)}}
+</style>
+</head>
+<body>
+
+
+<!-- MAIN APP -->
+<header>
+  <div class="logo">
+    <div class="logo-icon">🌟</div>
+    <div class="logo-text"><h1>StarRupture</h1><span>Arcadia-7 · Secteur Zeta · Cycle 2201.48</span></div>
+  </div>
+  <div class="header-mid">
+    <div class="status-chip"><div class="dot"></div>ONLINE</div>
+    <div class="status-chip"><div class="dot warn"></div>RUPTURA ACTIVE</div>
+    <div class="rupture-tag">⚠ J-12</div>
+  </div>
+  <div class="header-right">
+    <span class="user-tag" id="userTag"></span>
+    <a href="/admin.html" class="btn-hdr" id="adminLink" style="display:none">⚙ ADMIN</a>
+    <button class="btn-hdr" id="logoutBtn">DÉCONNEXION</button>
+    <div class="header-coords" id="headerCoords">X: — Y: —</div>
+  </div>
+</header>
+
+<div class="workspace">
+  <!-- LEFT -->
+  <div class="sidebar-left">
+    <div class="sidebar-section">
+      <div class="section-label">Filtres carte</div>
+      <div class="filter-grid" id="filterGrid">
+        <button class="filter-btn active" data-type="all" style="--color:var(--amber)"><span class="filter-icon">🗺️</span><span>Tous</span><span class="filter-count" id="cnt-all">0</span></button>
+        <button class="filter-btn" data-type="rupture" style="--color:#cc2222"><span class="filter-icon">☀️</span><span>Zones Rupture</span><span class="filter-count" id="cnt-rupture">0</span></button>
+        <button class="filter-btn" data-type="resource" style="--color:#e8a020"><span class="filter-icon">⛏️</span><span>Ressources</span><span class="filter-count" id="cnt-resource">0</span></button>
+        <button class="filter-btn" data-type="base" style="--color:#1ab8b8"><span class="filter-icon">🏗️</span><span>Bases</span><span class="filter-count" id="cnt-base">0</span></button>
+        <button class="filter-btn" data-type="alien" style="--color:#a020c8"><span class="filter-icon">👾</span><span>Infestations</span><span class="filter-count" id="cnt-alien">0</span></button>
+        <button class="filter-btn" data-type="blueprint" style="--color:#2064c8"><span class="filter-icon">📦</span><span>Blueprints</span><span class="filter-count" id="cnt-blueprint">0</span></button>
+      </div>
+    </div>
+    <div class="sidebar-section grow">
+      <div class="section-label">Marqueurs</div>
+      <div class="marker-list" id="markerList"><div class="empty-list">— aucun marqueur —</div></div>
+    </div>
+  </div>
+
+  <!-- MAP -->
+  <div class="map-container" id="mapContainer">
+    <div id="mapWorld">
+      <img id="mapImg" src="/map_starrupture.png" draggable="false" alt="Arcadia-7">
+      <svg id="flowSvg" xmlns="http://www.w3.org/2000/svg"></svg>
+      <div id="markersOverlay"></div>
+    </div>
+    <div class="map-hud"><div class="map-grid"></div><div class="scan-line"></div><div class="map-vignette"></div></div>
+    <div class="zoom-controls">
+      <button class="zoom-btn" id="zoomIn">+</button>
+      <div class="zoom-level" id="zoomLevel">100%</div>
+      <button class="zoom-btn" id="zoomOut">−</button>
+      <button class="btn-fit" id="zoomFit">FIT</button>
+    </div>
+  </div>
+
+  <!-- RIGHT -->
+  <div class="sidebar-right">
+    <div class="panel-tabs">
+      <button class="tab-btn active" data-tab="marker">📍 Marqueur</button>
+      <button class="tab-btn" data-tab="module">⚙ Module</button>
+      <button class="tab-btn" data-tab="detail">🔍 Détail</button>
+    </div>
+
+    <!-- TAB MARQUEUR -->
+    <div class="panel-scroll" id="tabMarker">
+      <div class="section-label">Nouveau marqueur</div>
+      <div class="form-group"><label class="form-label">Type</label>
+        <select class="form-select" id="markerType">
+          <option value="rupture">☀️ Zone Rupture</option>
+          <option value="resource">⛏️ Ressource</option>
+          <option value="base">🏗️ Base / Avant-poste</option>
+          <option value="alien">👾 Infestation Alien</option>
+          <option value="blueprint">📦 Plan / Blueprint</option>
+        </select></div>
+      <div class="form-group"><label class="form-label">Nom</label>
+        <input type="text" class="form-input" id="markerName" placeholder="Ex: Base Delta"></div>
+      <div class="form-group"><label class="form-label">Description</label>
+        <textarea class="form-textarea" id="markerDesc" placeholder="Notes, danger..."></textarea></div>
+      <div class="coords-hint" id="coordsHint">Cliquez sur la carte pour positionner</div>
+      <button class="btn-primary" id="btnAdd" disabled>PLACER LE MARQUEUR</button>
+    </div>
+
+    <!-- TAB MODULE -->
+    <div class="panel-scroll" id="tabModule" style="display:none">
+      <div class="section-label">Nouveau module</div>
+      <div class="form-group"><label class="form-label">Type</label>
+        <select class="form-select" id="moduleKind">
+          <option value="send">📤 Module Envoi</option>
+          <option value="recv">📥 Module Réception</option>
+        </select></div>
+      <div class="form-group"><label class="form-label">Nom du module</label>
+        <input type="text" class="form-input" id="moduleName" placeholder="Ex: Export Wolfram Nord"></div>
+      <div class="form-group"><label class="form-label">Base associée</label>
+        <select class="form-select" id="moduleBase"><option value="">— Sélectionner —</option></select></div>
+      <div class="form-group"><label class="form-label">Ressource</label>
+        <select class="form-select" id="moduleResource"><option value="">— Sélectionner —</option></select>
+        <div class="res-preview">
+          <div class="res-dot" id="resDot" style="background:#333"></div>
+          <span class="res-lbl" id="resLbl" style="color:var(--text-dim)">Aucune sélection</span>
+        </div></div>
+      <div id="sendFields">
+        <div class="form-group"><label class="form-label">Quantité / envoi</label>
+          <input type="number" class="form-input" id="moduleQty" min="1" value="100"></div>
+        <div class="form-group"><label class="form-label">Base de destination</label>
+          <select class="form-select" id="moduleDestBase"><option value="">— Sélectionner —</option></select></div>
+        <div class="form-group"><label class="form-label">Module réception cible</label>
+          <select class="form-select" id="moduleDestRecv"><option value="">— Choisir une base d'abord —</option></select></div>
+      </div>
+      <button class="btn-primary" id="btnAddModule">AJOUTER LE MODULE</button>
+      <div class="sep"></div>
+
+      <!-- FILTER BAR -->
+      <div class="mod-filter-bar">
+        <span class="mod-filter-label">FILTRE :</span>
+        <select class="mod-filter-select" id="modFilterResource">
+          <option value="">Toutes ressources</option>
+        </select>
+      </div>
+      <div class="mod-kind-tabs">
+        <button class="mod-kind-tab active" data-kind="all">Tous</button>
+        <button class="mod-kind-tab" data-kind="send">📤 Envoi</button>
+        <button class="mod-kind-tab" data-kind="recv">📥 Réception</button>
+      </div>
+      <div class="section-label">Modules existants <span id="modVisCount" style="color:var(--amber);margin-left:4px"></span></div>
+      <div id="moduleList"><div class="empty-list">— aucun module —</div></div>
+    </div>
+
+    <!-- TAB DETAIL -->
+    <div class="panel-scroll" id="tabDetail" style="display:none">
+      <div class="detail-empty" id="detailEmpty"><div class="de-icon">🛰️</div><div class="de-text">Sélectionnez un<br>marqueur pour<br>les détails</div></div>
+      <div id="detailContent" style="display:none"></div>
+    </div>
+
+    <div class="flow-legend">
+      <div class="leg-item"><div class="leg-line" style="background:var(--amber)"></div>Flux actif</div>
+      <div class="leg-item"><div class="leg-line" style="background:#777"></div>Sélectionné</div>
+    </div>
+  </div>
+</div>
+
+<div class="statusbar">
+  <div class="sb-item">SECTEUR <span>ZETA-7</span></div><div class="sb-sep"></div>
+  <div class="sb-item">MARQUEURS <span id="sbCount">0</span></div><div class="sb-sep"></div>
+  <div class="sb-item">MODULES <span id="sbModules">0</span></div><div class="sb-sep"></div>
+  <div class="sb-item">FLUX <span id="sbFlux">0</span></div><div class="sb-sep"></div>
+  <div class="sb-item ml-auto" id="sbCoords">X: — | Y: —</div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+// ══ API HELPERS ══
+const api = {
+  async get(url){ const r=await fetch(url,{credentials:'include'}); if(!r.ok) throw r; return r.json(); },
+  async post(url,data){ const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},credentials:'include',body:JSON.stringify(data)}); if(!r.ok){const e=await r.json();throw new Error(e.error||'Erreur');} return r.json(); },
+  async put(url,data){ const r=await fetch(url,{method:'PUT',headers:{'Content-Type':'application/json'},credentials:'include',body:JSON.stringify(data)}); if(!r.ok){const e=await r.json();throw new Error(e.error||'Erreur');} return r.json(); },
+  async del(url){ const r=await fetch(url,{method:'DELETE',credentials:'include'}); if(!r.ok) throw r; return r.json(); },
+};
+
+// ══ STATE ══
+let RESOURCES=[], markers=[], modules=[];
+let currentFilter='all', pendingCoords=null;
+let selectedMarkerId=null, selectedModuleId=null;
+let modFilterResource='', modFilterKind='all';
+let currentUser=null;
+
+const TYPES={
+  rupture:{icon:'☀️',label:'Zone Rupture',color:'#cc2222'},
+  resource:{icon:'⛏️',label:'Ressource',color:'#e8a020'},
+  base:{icon:'🏗️',label:'Base / Avant-poste',color:'#1ab8b8'},
+  alien:{icon:'👾',label:'Infestation Alien',color:'#a020c8'},
+  blueprint:{icon:'📦',label:'Plan / Blueprint',color:'#2064c8'},
+};
+
+// ══ INIT — session déjà validée par le serveur ══
+// Le serveur refuse de servir cette page sans JWT valide.
+// On récupère juste le profil pour afficher le nom et le rôle.
+document.getElementById('logoutBtn').addEventListener('click', async()=>{
+  await api.post('/api/auth/logout',{});
+  location.href='/login';
+});
+
+(async()=>{
+  try{
+    currentUser=await api.get('/api/auth/me');
+    document.getElementById('userTag').textContent='⬡ '+currentUser.username.toUpperCase();
+    if(currentUser.role==='admin') document.getElementById('adminLink').style.display='';
+    await loadAll();
+  }catch{
+    // Session expirée entre temps
+    location.href='/login';
+  }
+})();
+
+// ══ LOAD ALL DATA ══
+async function loadAll(){
+  [RESOURCES, markers, modules] = await Promise.all([
+    api.get('/api/resources'),
+    api.get('/api/markers'),
+    api.get('/api/modules'),
+  ]);
+  // Normalize module field names (SQLite snake_case → camelCase)
+  modules=modules.map(m=>({...m, baseId:m.base_id, resourceId:m.resource_id, destBaseId:m.dest_base_id, destRecvId:m.dest_recv_id}));
+  buildModFilterSelect();
+  buildResourceSelect(document.getElementById('moduleResource'));
+  populateBaseSelects();
+  updateAll();
+}
+
+// ══ RESOURCE HELPERS ══
+function getRes(id){ return RESOURCES.find(x=>x.id===id)||{label:id||'—',color:'#888',category:''}; }
+function getBaseName(id){ const m=markers.find(x=>x.id===id); return m?m.name:'?'; }
+
+function buildResourceSelect(el,selectedId){
+  const groups={};
+  RESOURCES.forEach(r=>{ if(!groups[r.category]) groups[r.category]=[]; groups[r.category].push(r); });
+  el.innerHTML='<option value="">— Sélectionner une ressource —</option>';
+  Object.entries(groups).forEach(([cat,items])=>{
+    const og=document.createElement('optgroup'); og.label=cat;
+    items.forEach(r=>{ const o=document.createElement('option'); o.value=r.id; o.textContent=r.label; if(r.id===selectedId) o.selected=true; og.appendChild(o); });
+    el.appendChild(og);
+  });
+}
+
+function buildModFilterSelect(){
+  const sel=document.getElementById('modFilterResource');
+  const used=new Set(modules.map(m=>m.resourceId).filter(Boolean));
+  sel.innerHTML='<option value="">Toutes ressources</option>';
+  const groups={};
+  RESOURCES.filter(r=>used.has(r.id)).forEach(r=>{ if(!groups[r.category]) groups[r.category]=[]; groups[r.category].push(r); });
+  Object.entries(groups).forEach(([cat,items])=>{
+    const og=document.createElement('optgroup'); og.label=cat;
+    items.forEach(r=>{ const o=document.createElement('option'); o.value=r.id; o.textContent=r.label; og.appendChild(o); });
+    sel.appendChild(og);
+  });
+}
+
+// ══ MODULE FORM ══
+document.getElementById('moduleKind').addEventListener('change',function(){
+  document.getElementById('sendFields').style.display=this.value==='send'?'':'none';
+});
+document.getElementById('moduleResource').addEventListener('change',function(){
+  const r=getRes(this.value);
+  document.getElementById('resDot').style.background=this.value?r.color:'#333';
+  document.getElementById('resLbl').textContent=this.value?r.label:'Aucune sélection';
+  document.getElementById('resLbl').style.color=this.value?r.color:'var(--text-dim)';
+  refreshDestRecvSelect();
+});
+document.getElementById('moduleBase').addEventListener('change',()=>{
+  const srcId=document.getElementById('moduleBase').value;
+  const bases=markers.filter(m=>m.type==='base'&&m.id!==srcId);
+  document.getElementById('moduleDestBase').innerHTML='<option value="">— Sélectionner —</option>'+bases.map(b=>`<option value="${b.id}">${b.name}</option>`).join('');
+  refreshDestRecvSelect();
+});
+document.getElementById('moduleDestBase').addEventListener('change',refreshDestRecvSelect);
+
+function populateBaseSelects(){
+  const bases=markers.filter(m=>m.type==='base');
+  const opts=bases.map(b=>`<option value="${b.id}">${b.name}</option>`).join('');
+  document.getElementById('moduleBase').innerHTML='<option value="">— Sélectionner —</option>'+opts;
+  document.getElementById('moduleDestBase').innerHTML='<option value="">— Sélectionner —</option>'+opts;
+  refreshDestRecvSelect();
+}
+
+function refreshDestRecvSelect(){
+  const destId=document.getElementById('moduleDestBase').value;
+  const resId=document.getElementById('moduleResource').value;
+  const sel=document.getElementById('moduleDestRecv');
+  if(!destId){sel.innerHTML='<option value="">— Choisir une base d\'abord —</option>';return;}
+  const recvs=modules.filter(m=>m.kind==='recv'&&m.baseId===destId);
+  if(!recvs.length){sel.innerHTML='<option value="">— Aucun module réception —</option>';return;}
+  sel.innerHTML='<option value="">— Optionnel : lier à un module —</option>'+recvs.map(m=>{
+    const r=getRes(m.resourceId);
+    const match=resId&&m.resourceId===resId?' ✓':'';
+    return `<option value="${m.id}">${m.name} [${r.label}]${match}</option>`;
+  }).join('');
+}
+
+// ══ ADD MARKER ══
+document.getElementById('btnAdd').addEventListener('click',async()=>{
+  const name=document.getElementById('markerName').value.trim();
+  const type=document.getElementById('markerType').value;
+  const description=document.getElementById('markerDesc').value.trim();
+  if(!name){showToast('⚠ Entrez un nom.');return;}
+  if(!pendingCoords){showToast('⚠ Cliquez sur la carte.');return;}
+  try{
+    const m=await api.post('/api/markers',{type,name,description,nx:pendingCoords.nx,ny:pendingCoords.ny});
+    markers.push({...m});
+    pendingCoords=null;
+    document.getElementById('markerName').value='';
+    document.getElementById('markerDesc').value='';
+    document.getElementById('coordsHint').textContent='Cliquez sur la carte pour positionner';
+    document.getElementById('btnAdd').disabled=true;
+    populateBaseSelects();
+    updateAll(); showToast('✓ Marqueur ajouté.');
+  }catch(e){showToast('Erreur: '+e.message);}
+});
+
+// ══ ADD MODULE ══
+document.getElementById('btnAddModule').addEventListener('click',async()=>{
+  const kind=document.getElementById('moduleKind').value;
+  const name=document.getElementById('moduleName').value.trim();
+  const base_id=document.getElementById('moduleBase').value;
+  const resource_id=document.getElementById('moduleResource').value;
+  if(!name){showToast('⚠ Nommez le module.');return;}
+  if(!base_id){showToast('⚠ Sélectionnez une base.');return;}
+  if(!resource_id){showToast('⚠ Sélectionnez une ressource.');return;}
+  const payload={kind,name,base_id,resource_id};
+  if(kind==='send'){
+    payload.qty=parseInt(document.getElementById('moduleQty').value)||100;
+    payload.dest_base_id=document.getElementById('moduleDestBase').value||null;
+    if(!payload.dest_base_id){showToast('⚠ Sélectionnez une destination.');return;}
+    payload.dest_recv_id=document.getElementById('moduleDestRecv').value||null;
+  }
+  try{
+    const m=await api.post('/api/modules',payload);
+    modules.push({...m, baseId:m.base_id, resourceId:m.resource_id, destBaseId:m.dest_base_id, destRecvId:m.dest_recv_id});
+    document.getElementById('moduleName').value='';
+    buildModFilterSelect();
+    updateAll(); showToast('✓ Module ajouté.');
+  }catch(e){showToast('Erreur: '+e.message);}
+});
+
+// ══ DELETE ══
+async function deleteMarker(id){
+  await api.del('/api/markers/'+id);
+  markers=markers.filter(m=>m.id!==id);
+  modules=modules.filter(m=>m.baseId!==id&&m.destBaseId!==id);
+  if(selectedMarkerId===id){selectedMarkerId=null;document.getElementById('detailEmpty').style.display='flex';document.getElementById('detailContent').style.display='none';}
+  populateBaseSelects(); buildModFilterSelect(); updateAll(); showToast('Marqueur supprimé.');
+}
+async function deleteModule(id){
+  await api.del('/api/modules/'+id);
+  modules=modules.filter(m=>m.id!==id);
+  if(selectedModuleId===id) selectedModuleId=null;
+  buildModFilterSelect(); updateAll(); showToast('Module supprimé.');
+}
+
+// ══ FILTER LOGIC ══
+document.getElementById('filterGrid').addEventListener('click',e=>{
+  const btn=e.target.closest('.filter-btn'); if(!btn) return;
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active'); currentFilter=btn.dataset.type;
+  renderMarkersDOM(); renderList();
+});
+
+// Module filters
+document.getElementById('modFilterResource').addEventListener('change',function(){
+  modFilterResource=this.value; applyModuleFilter();
+});
+document.querySelectorAll('.mod-kind-tab').forEach(btn=>btn.addEventListener('click',function(){
+  document.querySelectorAll('.mod-kind-tab').forEach(b=>b.classList.remove('active'));
+  this.classList.add('active'); modFilterKind=this.dataset.kind; applyModuleFilter();
+}));
+
+function applyModuleFilter(){
+  const cards=document.querySelectorAll('#moduleList .module-card');
+  let visible=0;
+  cards.forEach(card=>{
+    const kind=card.dataset.kind;
+    const res=card.dataset.res;
+    const kindOk=modFilterKind==='all'||kind===modFilterKind;
+    const resOk=!modFilterResource||res===modFilterResource;
+    const show=kindOk&&resOk;
+    card.classList.toggle('hidden-mod',!show);
+    if(show) visible++;
+  });
+  document.getElementById('modVisCount').textContent=visible?`(${visible})`:'';
+}
+
+// ══ RENDER MODULE LIST ══
+function renderModuleList(){
+  const list=document.getElementById('moduleList');
+  if(!modules.length){list.innerHTML='<div class="empty-list">— aucun module —</div>';return;}
+  list.innerHTML=modules.map(mod=>{
+    const base=markers.find(m=>m.id===mod.baseId);
+    const rc=getRes(mod.resourceId).color;
+    const rl=getRes(mod.resourceId).label;
+    const isSel=mod.id===selectedModuleId;
+    let body='';
+    if(mod.kind==='send'){
+      const dst=markers.find(m=>m.id===mod.destBaseId);
+      const recvLinked=mod.destRecvId?modules.find(m=>m.id===mod.destRecvId):null;
+      body=`<div class="mc-meta"><span class="resdot" style="background:${rc}"></span><b>${rl}</b> · <b>${mod.qty}</b>/envoi<br>📍 ${base?base.name:'?'} → <b>${dst?dst.name:'?'}</b>${recvLinked?` · <span style="color:var(--cyan)">réc. lié</span>`:''}</div>${dst?`<div class="mc-link">🔗 ${base?base.name:'?'} → ${dst.name}</div>`:''}`;
+    } else {
+      const linkedSends=modules.filter(s=>s.kind==='send'&&s.destRecvId===mod.id);
+      body=`<div class="mc-meta"><span class="resdot" style="background:${rc}"></span>Attend: <b>${rl}</b><br>📍 ${base?base.name:'?'}${linkedSends.length?`<br>← ${linkedSends.length} envoi(s) lié(s)`:'<br><span style="color:#886644">⚠ aucun envoi lié</span>'}</div>`;
+    }
+    return `<div class="module-card ${isSel?'selected':''}" data-mid="${mod.id}" data-kind="${mod.kind}" data-res="${mod.resourceId||''}"><div class="mc-head"><span class="mbadge ${mod.kind==='send'?'mbadge-send':'mbadge-recv'}">${mod.kind==='send'?'📤':'📥'}</span><span class="mc-name">${mod.name||'Sans nom'}</span><button class="btn-icon-del" data-del="${mod.id}">✕</button></div>${body}</div>`;
+  }).join('');
+  list.querySelectorAll('.module-card').forEach(el=>{
+    el.addEventListener('click',e=>{if(e.target.closest('.btn-icon-del')) return; selectModule(el.dataset.mid);});
+  });
+  list.querySelectorAll('.btn-icon-del').forEach(btn=>{
+    btn.addEventListener('click',e=>{e.stopPropagation();deleteModule(btn.dataset.del);});
+  });
+  applyModuleFilter();
+}
+
+// ══ SELECT MARKER ══
+function selectMarker(id){
+  selectedMarkerId=id; selectedModuleId=null;
+  renderList(); renderMarkersDOM(); renderFlows();
+  switchTab('detail');
+  const m=markers.find(x=>x.id===id); if(!m) return;
+  const t=TYPES[m.type];
+  const mods=modules.filter(x=>x.baseId===id);
+  const sends=mods.filter(x=>x.kind==='send');
+  const recvs=mods.filter(x=>x.kind==='recv');
+  document.getElementById('detailEmpty').style.display='none';
+  const dc=document.getElementById('detailContent'); dc.style.display='block';
+  let modsHtml='';
+  if(m.type==='base'&&(sends.length||recvs.length)){
+    modsHtml+='<div class="sep"></div>';
+    if(sends.length){
+      modsHtml+=`<div class="mod-sec-title">📤 Envoi (${sends.length})</div>`;
+      modsHtml+=sends.map(s=>{
+        const dst=markers.find(x=>x.id===s.destBaseId);
+        const rc=getRes(s.resourceId).color,rl=getRes(s.resourceId).label;
+        return `<div class="module-card"><div class="mc-head"><span class="mbadge mbadge-send">📤</span><span class="mc-name">${s.name||'Sans nom'}</span></div><div class="mc-meta"><span class="resdot" style="background:${rc}"></span><b>${rl}</b> · <b>${s.qty}</b>/envoi<br>→ <b>${dst?dst.name:'?'}</b></div></div>`;
+      }).join('');
+    }
+    if(recvs.length){
+      modsHtml+=`<div class="mod-sec-title">📥 Réception (${recvs.length})</div>`;
+      modsHtml+=recvs.map(r=>{
+        const rc=getRes(r.resourceId).color,rl=getRes(r.resourceId).label;
+        const linked=modules.filter(s=>s.kind==='send'&&s.destRecvId===r.id);
+        return `<div class="module-card"><div class="mc-head"><span class="mbadge mbadge-recv">📥</span><span class="mc-name">${r.name||'Sans nom'}</span></div><div class="mc-meta"><span class="resdot" style="background:${rc}"></span>Attend: <b>${rl}</b>${linked.length?`<br>← ${linked.length} envoi(s)`:'<br><span style="color:#886644">⚠ aucun envoi lié</span>'}</div></div>`;
+      }).join('');
+    }
+  }
+  dc.innerHTML=`<div class="detail-type-tag" style="background:${t.color}22;border:1px solid ${t.color}55;color:${t.color}">${t.icon} ${t.label.toUpperCase()}</div><div class="detail-name">${m.name}</div><div class="detail-coords">📍 X:${Math.round(m.nx*1000)/10}% · Y:${Math.round(m.ny*1000)/10}%</div><div class="detail-desc">${m.description||'Aucune description.'}</div>${modsHtml}<div class="sep"></div><button class="btn-danger" data-del="${m.id}">🗑 SUPPRIMER CE MARQUEUR</button>`;
+  dc.querySelector('.btn-danger').addEventListener('click',()=>deleteMarker(m.id));
+}
+
+function selectModule(id){
+  selectedModuleId=id; selectedMarkerId=null;
+  renderMarkersDOM(); renderFlows(); renderModuleList(); renderList();
+}
+
+// ══ RENDER LIST ══
+function renderList(){
+  const list=document.getElementById('markerList');
+  const vis=markers.filter(m=>currentFilter==='all'||m.type===currentFilter);
+  if(!vis.length){list.innerHTML='<div class="empty-list">— aucun marqueur —</div>';return;}
+  list.innerHTML=vis.map(m=>{
+    const t=TYPES[m.type];
+    return `<div class="marker-item ${m.id===selectedMarkerId?'selected':''}" data-id="${m.id}"><div class="marker-item-header"><span class="mi-icon">${t.icon}</span><span class="mi-name">${m.name}</span></div><div class="mi-desc">${m.description||'—'}</div></div>`;
+  }).join('');
+  list.querySelectorAll('.marker-item').forEach(el=>el.addEventListener('click',()=>selectMarker(el.dataset.id)));
+}
+
+// ══ COUNTS ══
+function updateCounts(){
+  document.getElementById('cnt-all').textContent=markers.length;
+  ['rupture','resource','base','alien','blueprint'].forEach(t=>document.getElementById('cnt-'+t).textContent=markers.filter(m=>m.type===t).length);
+  document.getElementById('sbCount').textContent=markers.length;
+  document.getElementById('sbModules').textContent=modules.length;
+  document.getElementById('sbFlux').textContent=modules.filter(m=>m.kind==='send').length;
+}
+
+// ══ PAN/ZOOM ══
+const mapContainer=document.getElementById('mapContainer');
+const mapWorld=document.getElementById('mapWorld');
+const mapImg=document.getElementById('mapImg');
+const flowSvg=document.getElementById('flowSvg');
+let scale=1,panX=0,panY=0,isPanning=false,panStart={x:0,y:0},panOrigin={x:0,y:0};
+let imgW=1080,imgH=1080;
+function applyTransform(){
+  mapWorld.style.transform=`translate(${panX}px,${panY}px) scale(${scale})`;
+  document.getElementById('zoomLevel').textContent=Math.round(scale*100)+'%';
+  renderMarkersDOM(); renderFlows();
+}
+function fitMap(){
+  const cw=mapContainer.offsetWidth,ch=mapContainer.offsetHeight;
+  scale=Math.min(cw/imgW,ch/imgH)*.92; panX=(cw-imgW*scale)/2; panY=(ch-imgH*scale)/2; applyTransform();
+}
+mapImg.addEventListener('load',()=>{
+  imgW=mapImg.naturalWidth||1080; imgH=mapImg.naturalHeight||1080;
+  mapWorld.style.width=imgW+'px'; mapWorld.style.height=imgH+'px';
+  flowSvg.setAttribute('width',imgW); flowSvg.setAttribute('height',imgH);
+  fitMap();
+});
+document.getElementById('zoomIn').addEventListener('click',()=>zoomAt(.25,mapContainer.offsetWidth/2,mapContainer.offsetHeight/2));
+document.getElementById('zoomOut').addEventListener('click',()=>zoomAt(-.25,mapContainer.offsetWidth/2,mapContainer.offsetHeight/2));
+document.getElementById('zoomFit').addEventListener('click',fitMap);
+function zoomAt(d,cx,cy){ const ns=Math.max(.3,Math.min(4,scale+d)),f=ns/scale; panX=cx-f*(cx-panX); panY=cy-f*(cy-panY); scale=ns; applyTransform(); }
+mapContainer.addEventListener('wheel',e=>{ e.preventDefault(); const r=mapContainer.getBoundingClientRect(); zoomAt(e.deltaY<0?.15:-.15,e.clientX-r.left,e.clientY-r.top); },{passive:false});
+mapContainer.addEventListener('mousedown',e=>{ if(e.button===1||e.button===2){isPanning=true;panStart={x:e.clientX,y:e.clientY};panOrigin={x:panX,y:panY};mapContainer.style.cursor='grab';e.preventDefault();} });
+window.addEventListener('mousemove',e=>{ if(isPanning){panX=panOrigin.x+(e.clientX-panStart.x);panY=panOrigin.y+(e.clientY-panStart.y);applyTransform();} const r=mapContainer.getBoundingClientRect(); const wx=(e.clientX-r.left-panX)/scale,wy=(e.clientY-r.top-panY)/scale; const nx=Math.round(wx/imgW*1000)/10,ny=Math.round(wy/imgH*1000)/10; document.getElementById('headerCoords').textContent='X:'+nx+'% Y:'+ny+'%'; document.getElementById('sbCoords').textContent='X:'+nx+'% | Y:'+ny+'%'; });
+window.addEventListener('mouseup',()=>{ if(isPanning){isPanning=false;mapContainer.style.cursor='crosshair';} });
+mapContainer.addEventListener('contextmenu',e=>e.preventDefault());
+mapContainer.addEventListener('click',e=>{ if(isPanning||e.button!==0) return; if(e.target.closest('.map-marker')) return; const r=mapContainer.getBoundingClientRect(); const wx=(e.clientX-r.left-panX)/scale,wy=(e.clientY-r.top-panY)/scale; const nx=wx/imgW,ny=wy/imgH; if(nx<0||nx>1||ny<0||ny>1) return; pendingCoords={nx,ny}; document.getElementById('coordsHint').textContent='📍 X:'+Math.round(nx*1000)/10+'% Y:'+Math.round(ny*1000)/10+'%'; document.getElementById('btnAdd').disabled=false; renderMarkersDOM(); const flash=document.createElement('div'); flash.style.cssText='position:absolute;pointer-events:none;z-index:100;left:'+(wx*scale+panX)+'px;top:'+(wy*scale+panY)+'px;width:22px;height:22px;margin-left:-11px;margin-top:-11px;border:1.5px solid var(--amber);border-radius:50%;animation:fadeFlash .65s forwards'; mapContainer.appendChild(flash); setTimeout(()=>flash.remove(),700); },{passive:true});
+
+// ══ RENDER MARKERS DOM ══
+const markersOverlay=document.getElementById('markersOverlay');
+function renderMarkersDOM(){
+  markersOverlay.innerHTML='';
+  if(pendingCoords){ const el=document.createElement('div'); el.className='pending-cross'; el.style.left=pendingCoords.nx*imgW+'px'; el.style.top=pendingCoords.ny*imgH+'px'; markersOverlay.appendChild(el); }
+  markers.filter(m=>currentFilter==='all'||m.type===currentFilter).forEach(m=>{
+    const t=TYPES[m.type]; const hl=isHighlighted(m.id);
+    const el=document.createElement('div');
+    el.className='map-marker'+(m.id===selectedMarkerId?' selected':'')+(hl?' highlighted':'');
+    if(hl) el.style.setProperty('--hl-color',t.color);
+    el.style.left=m.nx*imgW+'px'; el.style.top=m.ny*imgH+'px';
+    el.innerHTML='<div class="marker-pin '+m.type+'"><span>'+t.icon+'</span></div><div class="marker-tooltip">'+m.name+'</div>';
+    el.addEventListener('click',e=>{e.stopPropagation();selectMarker(m.id);});
+    markersOverlay.appendChild(el);
+  });
+}
+function isHighlighted(mid){ if(!selectedModuleId) return false; const mod=modules.find(m=>m.id===selectedModuleId); return mod&&(mod.baseId===mid||mod.destBaseId===mid); }
+
+// ══ RENDER FLOWS ══
+function renderFlows(){
+  flowSvg.innerHTML='';
+  const defs=document.createElementNS('http://www.w3.org/2000/svg','defs'); flowSvg.appendChild(defs);
+  modules.filter(m=>m.kind==='send').forEach(mod=>{
+    const src=markers.find(m=>m.id===mod.baseId),dst=markers.find(m=>m.id===mod.destBaseId);
+    if(!src||!dst) return;
+    const x1=src.nx*imgW,y1=src.ny*imgH,x2=dst.nx*imgW,y2=dst.ny*imgH;
+    const isSel=selectedModuleId===mod.id; const rc=getRes(mod.resourceId).color;
+    const dx=x2-x1,dy=y2-y1,mx=(x1+x2)/2,my=(y1+y2)/2;
+    const cx1=mx-dy*.2,cy1=my+dx*.2;
+    const d='M'+x1+','+y1+' Q'+cx1+','+cy1+' '+x2+','+y2;
+    const mid='arr'+mod.id;
+    const mEl=document.createElementNS('http://www.w3.org/2000/svg','marker');
+    mEl.setAttribute('id',mid); mEl.setAttribute('markerWidth','7'); mEl.setAttribute('markerHeight','7'); mEl.setAttribute('refX','6'); mEl.setAttribute('refY','3.5'); mEl.setAttribute('orient','auto');
+    const poly=document.createElementNS('http://www.w3.org/2000/svg','polygon'); poly.setAttribute('points','0 0,7 3.5,0 7'); poly.setAttribute('fill',rc); mEl.appendChild(poly); defs.appendChild(mEl);
+    const glow=document.createElementNS('http://www.w3.org/2000/svg','path'); glow.setAttribute('d',d); glow.setAttribute('fill','none'); glow.setAttribute('stroke',rc); glow.setAttribute('stroke-width',isSel?'8':'5'); glow.setAttribute('stroke-opacity','0.1'); glow.setAttribute('stroke-linecap','round'); flowSvg.appendChild(glow);
+    const line=document.createElementNS('http://www.w3.org/2000/svg','path'); line.setAttribute('d',d); line.setAttribute('fill','none'); line.setAttribute('stroke',rc); line.setAttribute('stroke-width',isSel?'2.5':'1.8'); line.setAttribute('stroke-opacity',isSel?'1':'0.72'); line.setAttribute('stroke-linecap','round'); line.setAttribute('stroke-dasharray','9 6'); line.setAttribute('marker-end','url(#'+mid+')'); line.classList.add('flow-line'); flowSvg.appendChild(line);
+    const labelText=(mod.name||getRes(mod.resourceId).label)+' ×'+mod.qty;
+    const lw=Math.min(labelText.length*6+20,130);
+    const bg=document.createElementNS('http://www.w3.org/2000/svg','rect'); bg.setAttribute('x',cx1-lw/2); bg.setAttribute('y',cy1-9); bg.setAttribute('width',lw); bg.setAttribute('height','16'); bg.setAttribute('rx','3'); bg.setAttribute('fill','#0a0c10'); bg.setAttribute('fill-opacity','0.88'); bg.setAttribute('stroke',rc); bg.setAttribute('stroke-width','0.8'); bg.setAttribute('stroke-opacity','0.6'); flowSvg.appendChild(bg);
+    const txt=document.createElementNS('http://www.w3.org/2000/svg','text'); txt.setAttribute('x',cx1); txt.setAttribute('y',cy1+1); txt.setAttribute('text-anchor','middle'); txt.setAttribute('dominant-baseline','middle'); txt.setAttribute('font-family','Share Tech Mono,monospace'); txt.setAttribute('font-size','7.5'); txt.setAttribute('fill',rc); txt.setAttribute('fill-opacity','0.95'); txt.textContent=labelText; flowSvg.appendChild(txt);
+    const hit=document.createElementNS('http://www.w3.org/2000/svg','path'); hit.setAttribute('d',d); hit.setAttribute('fill','none'); hit.setAttribute('stroke','transparent'); hit.setAttribute('stroke-width','18'); hit.style.cursor='pointer'; hit.style.pointerEvents='stroke'; hit.addEventListener('click',e=>{e.stopPropagation();selectModule(mod.id);}); flowSvg.appendChild(hit);
+  });
+}
+
+// ══ TABS ══
+document.querySelectorAll('.tab-btn').forEach(btn=>btn.addEventListener('click',()=>switchTab(btn.dataset.tab)));
+function switchTab(tab){
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));
+  document.getElementById('tabMarker').style.display=tab==='marker'?'':'none';
+  document.getElementById('tabModule').style.display=tab==='module'?'':'none';
+  document.getElementById('tabDetail').style.display=tab==='detail'?'':'none';
+  if(tab==='module') populateBaseSelects();
+}
+
+// ══ UPDATE ALL ══
+function updateAll(){ updateCounts(); renderMarkersDOM(); renderFlows(); renderList(); renderModuleList(); }
+
+// ══ TOAST ══
+let toastTimer;
+function showToast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove('show'),2800); }
+const s=document.createElement('style'); s.textContent='@keyframes fadeFlash{0%{opacity:1;transform:translate(-50%,-50%) scale(.5)}100%{opacity:0;transform:translate(-50%,-50%) scale(2.5)}}'; document.head.appendChild(s);
+</script>
+</body>
+</html>
