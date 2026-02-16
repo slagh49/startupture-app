@@ -20,6 +20,8 @@ db.exec(`
     username  TEXT UNIQUE NOT NULL,
     password  TEXT NOT NULL,
     role      TEXT NOT NULL DEFAULT 'player',  -- 'admin' | 'player'
+    ui_theme  TEXT NOT NULL DEFAULT 'dark',    -- 'dark' | 'light'
+    ui_show_base_labels INTEGER NOT NULL DEFAULT 1, -- 1=show labels on map
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     last_login TEXT
   );
@@ -68,6 +70,30 @@ db.exec(`
     ip         TEXT,
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
   );
+`);
+
+// ── LIGHT MIGRATIONS (safe) ──
+// Add ui_theme / ui_show_base_labels columns if the DB was created before these features.
+const userCols = db.prepare("PRAGMA table_info(users)").all().map(r => r.name);
+if (!userCols.includes('ui_theme')) {
+  db.exec("ALTER TABLE users ADD COLUMN ui_theme TEXT NOT NULL DEFAULT 'dark'");
+}
+if (!userCols.includes('ui_show_base_labels')) {
+  db.exec("ALTER TABLE users ADD COLUMN ui_show_base_labels INTEGER NOT NULL DEFAULT 1");
+}
+
+// Recommended pragmas for better day-one performance.
+db.pragma('synchronous = NORMAL');
+db.pragma('temp_store = MEMORY');
+
+// ── INDEXES (safe) ──
+db.exec(`
+  CREATE INDEX IF NOT EXISTS idx_logs_created_at ON logs(created_at);
+  CREATE INDEX IF NOT EXISTS idx_markers_type ON markers(type);
+  CREATE INDEX IF NOT EXISTS idx_modules_base_id ON modules(base_id);
+  CREATE INDEX IF NOT EXISTS idx_modules_dest_base_id ON modules(dest_base_id);
+  CREATE INDEX IF NOT EXISTS idx_modules_dest_recv_id ON modules(dest_recv_id);
+  CREATE INDEX IF NOT EXISTS idx_resources_cat_sort ON resources(category, sort_order);
 `);
 
 // ── SEED RESOURCES (if empty) ──

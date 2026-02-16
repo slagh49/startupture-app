@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StarRupture — Tableur des flux</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;600;700&family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg-void:#050608;--bg-panel:#0a0c10;--bg-surface:#0f1318;--bg-elevated:#161b22;
+  --amber:#e8a020;--amber-dim:#8a5c0e;--amber-glow:rgba(232,160,32,0.15);
+  --red:#cc2222;--red-dim:rgba(204,34,34,0.2);
+  --cyan:#1ab8b8;--green:#2a8a3a;
+  --text-primary:#c8cdd4;--text-dim:#4a5260;
+  --border:#1e2430;--border-amber:rgba(232,160,32,0.3);
+}
+body[data-theme="light"]{
+  --bg-void:#f3f5f8;--bg-panel:#ffffff;--bg-surface:#f6f8fb;--bg-elevated:#eef2f7;
+  --text-primary:#1b2430;--text-dim:#5d6a7a;--border:#d6dee8;
+  --border-amber:rgba(232,160,32,0.35);--amber-glow:rgba(232,160,32,0.10);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg-void);color:var(--text-primary);font-family:'Rajdhani',sans-serif;font-size:14px;height:100vh;display:flex;flex-direction:column;overflow:hidden}
+
+header{display:flex;align-items:center;justify-content:space-between;padding:8px 16px;background:var(--bg-panel);border-bottom:1px solid var(--border);position:relative;flex-shrink:0;z-index:100}
+header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--amber),transparent);opacity:.3}
+.logo{display:flex;align-items:center;gap:10px}
+.logo-icon{width:32px;height:32px;border:1px solid var(--amber-dim);border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:15px;background:var(--amber-glow)}
+.logo-text h1{font-family:'Orbitron',sans-serif;font-size:14px;font-weight:900;color:var(--amber);letter-spacing:.12em;text-transform:uppercase;line-height:1}
+.logo-text span{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text-dim);letter-spacing:.15em}
+.header-right{display:flex;align-items:center;gap:10px}
+.user-tag{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--amber);letter-spacing:.08em}
+.btn-hdr{padding:3px 10px;background:transparent;border:1px solid var(--border);border-radius:3px;color:var(--text-dim);font-family:'Share Tech Mono',monospace;font-size:9px;cursor:pointer;transition:all .15s;letter-spacing:.08em;text-decoration:none;display:inline-flex;align-items:center}
+.btn-hdr:hover{border-color:var(--amber-dim);color:var(--amber)}
+
+.main{flex:1;overflow:hidden;display:flex;flex-direction:column}
+.toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:10px 16px;background:var(--bg-panel);border-bottom:1px solid var(--border)}
+.toolbar .label{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text-dim);letter-spacing:.15em;text-transform:uppercase}
+.sel{background:var(--bg-surface);border:1px solid var(--border);border-radius:4px;padding:6px 8px;font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text-primary);outline:none;appearance:none;cursor:pointer}
+.sel:focus{border-color:var(--border-amber)}
+
+.tablewrap{flex:1;overflow:auto;padding:12px 16px}
+.table{width:100%;border-collapse:collapse;font-family:'Share Tech Mono',monospace;font-size:10px;min-width:920px}
+.table thead th{position:sticky;top:0;background:var(--bg-elevated);border-bottom:1px solid var(--border);padding:8px 8px;text-align:left;z-index:5}
+.table tbody td{border-bottom:1px solid var(--border);padding:7px 8px;color:var(--text-primary)}
+.table tbody tr:hover{background:var(--amber-glow);cursor:pointer}
+.table .right{text-align:right}
+.table .dim{color:var(--text-dim)}
+.group-row td{background:var(--bg-elevated);border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:9px 8px;font-weight:700;letter-spacing:.06em}
+.badge{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border);border-radius:999px;padding:2px 8px;font-size:9px}
+.badge.send{border-color:rgba(232,160,32,.45);color:var(--amber);background:rgba(232,160,32,.10)}
+.badge.recv{border-color:rgba(26,184,184,.45);color:var(--cyan);background:rgba(26,184,184,.10)}
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(16px);background:var(--bg-elevated);border:1px solid var(--border-amber);border-radius:4px;padding:7px 16px;font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--amber);letter-spacing:.1em;opacity:0;transition:all .22s;pointer-events:none;z-index:2000}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+.tabs{display:inline-flex;border:1px solid var(--border);border-radius:4px;overflow:hidden}
+.tabbtn{padding:6px 10px;background:var(--bg-surface);border:0;border-right:1px solid var(--border);color:var(--text-dim);font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:.12em;text-transform:uppercase;cursor:pointer}
+.tabbtn:last-child{border-right:0}
+.tabbtn.active{background:var(--bg-elevated);color:var(--amber);box-shadow:inset 0 0 0 1px var(--border-amber)}
+.sankeywrap{flex:1;overflow:hidden;padding:10px 16px;display:none}
+.sankeywrap.active{display:block}
+.tablewrap.hidden{display:none}
+.sankeybox{height:100%;width:100%;background:var(--bg-panel);border:1px solid var(--border);border-radius:6px;position:relative;overflow:hidden}
+.sankeyhint{position:absolute;top:10px;left:10px;font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text-dim);letter-spacing:.12em;text-transform:uppercase;background:rgba(0,0,0,.15);padding:4px 8px;border:1px solid var(--border);border-radius:999px}
+body[data-theme="light"] .sankeyhint{background:rgba(255,255,255,.55)}
+.tooltip{position:fixed;pointer-events:none;z-index:3000;background:var(--bg-elevated);border:1px solid var(--border-amber);border-radius:4px;padding:6px 10px;font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text-primary);letter-spacing:.06em;max-width:340px;opacity:0;transform:translateY(6px);transition:opacity .12s, transform .12s}
+.tooltip.show{opacity:1;transform:translateY(0)}
+
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">
+    <div class="logo-icon">🌟</div>
+    <div class="logo-text"><h1>StarRupture</h1><span>Tableur des flux · Arcadia-7</span></div>
+  </div>
+  <div class="header-right">
+    <span class="user-tag" id="userTag"></span>
+    <a class="btn-hdr" href="/">🗺️ CARTE</a>
+    <a href="/admin.html" class="btn-hdr" id="adminLink" style="display:none">⚙ ADMIN</a>
+    <button class="btn-hdr" id="themeToggle" title="Basculer thème">☀️/🌙</button>
+    <button class="btn-hdr" id="logoutBtn">DÉCONNEXION</button>
+  </div>
+</header>
+
+<div class="main">
+  <div class="toolbar">
+    <div class="tabs" style="margin-right:6px">
+      <button class="tabbtn active" id="tabTable">Table</button>
+      <button class="tabbtn" id="tabSankey">Flux</button>
+    </div>
+    <span class="label">Regrouper</span>
+    <select class="sel" id="groupBy">
+      <option value="none">— Aucun —</option>
+      <option value="base">Par base</option>
+      <option value="resource">Par ressource</option>
+    </select>
+
+    <span class="label">Type</span>
+    <select class="sel" id="kind">
+      <option value="all">Tous</option>
+      <option value="send">📤 Envois</option>
+      <option value="recv">📥 Réceptions</option>
+    </select>
+
+    <span class="label">Ressource</span>
+    <select class="sel" id="resourceFilter">
+      <option value="">Toutes</option>
+    </select>
+
+    <span class="label">Base</span>
+    <select class="sel" id="baseFilter">
+      <option value="">Toutes</option>
+    </select>
+  </div>
+
+  <div class="tablewrap">
+    <table class="table" id="tbl">
+      <thead>
+        <tr>
+          <th>TYPE</th>
+          <th>MODULE</th>
+          <th>BASE</th>
+          <th>DEST</th>
+          <th>RESSOURCE</th>
+          <th class="right">QTY</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+    <div id="empty" class="dim" style="padding:14px 2px;display:none;font-family:'Share Tech Mono',monospace;font-size:10px">— aucun flux —</div>
+  </div>
+
+  <div class="sankeywrap" id="sankeyWrap">
+    <div class="sankeybox" id="sankeyBox">
+      <div class="sankeyhint">Vue: Base → Module → Module → Base</div>
+      <svg id="sankeySvg" width="100%" height="100%"></svg>
+    </div>
+  </div>
+</div>
+
+<div class="tooltip" id="tip"></div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/d3-sankey@0.12.3/dist/d3-sankey.min.js"></script>
+<script>
+const api = {
+  async get(url){ const r=await fetch(url,{credentials:'include'}); if(!r.ok) throw r; return r.json(); },
+  async post(url,data){ const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},credentials:'include',body:JSON.stringify(data)}); if(!r.ok){const e=await r.json();throw new Error(e.error||'Erreur');} return r.json(); },
+  async put(url,data){ const r=await fetch(url,{method:'PUT',headers:{'Content-Type':'application/json'},credentials:'include',body:JSON.stringify(data)}); if(!r.ok){const e=await r.json();throw new Error(e.error||'Erreur');} return r.json(); },
+};
+
+let currentUser=null;
+let currentTheme='dark';
+let RESOURCES=[], markers=[], modules=[];
+
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;
+  t.classList.add('show');
+  clearTimeout(showToast._tm);
+  showToast._tm=setTimeout(()=>t.classList.remove('show'),1600);
+}
+
+function applyTheme(theme){
+  currentTheme = (theme==='light') ? 'light' : 'dark';
+  document.body.dataset.theme = currentTheme;
+  document.getElementById('themeToggle').textContent = currentTheme==='light' ? '🌙' : '☀️';
+}
+
+document.getElementById('themeToggle').addEventListener('click', async()=>{
+  const next = currentTheme==='light' ? 'dark' : 'light';
+  applyTheme(next);
+  try{ currentUser = await api.put('/api/auth/me', { ui_theme: next }); }
+  catch{ showToast('Erreur: thème non enregistré'); }
+});
+
+document.getElementById('logoutBtn').addEventListener('click', async()=>{
+  await api.post('/api/auth/logout',{});
+  location.href='/login';
+});
+
+function getRes(id){ return RESOURCES.find(r=>r.id===id)||{label:id||'—'}; }
+function getMarker(id){ return markers.find(m=>m.id===id)||null; }
+
+function buildFilters(){
+  // resources
+  const usedRes = new Set(modules.map(m=>m.resourceId).filter(Boolean));
+  const resSel=document.getElementById('resourceFilter');
+  resSel.innerHTML='<option value="">Toutes</option>' + RESOURCES.filter(r=>usedRes.has(r.id)).map(r=>`<option value="${r.id}">${escapeHtml(r.label)}</option>`).join('');
+
+  // bases
+  const bases = markers.filter(m=>m.type==='base');
+  const baseSel=document.getElementById('baseFilter');
+  baseSel.innerHTML='<option value="">Toutes</option>' + bases.map(b=>`<option value="${b.id}">${escapeHtml(b.name)}</option>`).join('');
+}
+
+function escapeHtml(s){
+  return String(s??'').replace(/[&<>'\"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;","\"":"&quot;"}[c]));
+}
+
+function flowRows(){
+  const rows=[];
+  for(const m of modules){
+    const base=getMarker(m.baseId);
+    const res=getRes(m.resourceId);
+    if(m.kind==='send'){
+      const dst=getMarker(m.destBaseId);
+      rows.push({
+        id:m.id,
+        kind:'send',
+        moduleName:m.name||'(sans nom)',
+        baseName:base?base.name:'?',
+        destName:dst?dst.name:'?',
+        resourceId:m.resourceId,
+        resourceLabel:res.label,
+        qty:(m.qty==null?'':m.qty)
+      });
+    } else if(m.kind==='recv') {
+      rows.push({
+        id:m.id,
+        kind:'recv',
+        moduleName:m.name||'(sans nom)',
+        baseName:base?base.name:'?',
+        destName:'—',
+        resourceId:m.resourceId,
+        resourceLabel:res.label,
+        qty:'—'
+      });
+    }
+  }
+  return rows;
+}
+
+
+let activeView = 'table'; // 'table' | 'sankey'
+const tip = document.getElementById('tip');
+
+function showTip(html, x, y){
+  tip.innerHTML = html;
+  tip.style.left = (x + 14) + 'px';
+  tip.style.top  = (y + 14) + 'px';
+  tip.classList.add('show');
+}
+function hideTip(){ tip.classList.remove('show'); }
+
+function setView(v){
+  activeView = v;
+  const isTable = (v==='table');
+  document.getElementById('tabTable').classList.toggle('active', isTable);
+  document.getElementById('tabSankey').classList.toggle('active', !isTable);
+  document.querySelector('.tablewrap').classList.toggle('hidden', !isTable);
+  document.getElementById('sankeyWrap').classList.toggle('active', !isTable);
+  if(!isTable) renderSankey();
+}
+
+document.getElementById('tabTable').addEventListener('click', ()=>setView('table'));
+document.getElementById('tabSankey').addEventListener('click', ()=>setView('sankey'));
+
+let _sankeyRaf = null;
+window.addEventListener('resize', ()=>{
+  if(activeView!=='sankey') return;
+  cancelAnimationFrame(_sankeyRaf);
+  _sankeyRaf = requestAnimationFrame(renderSankey);
+});
+
+function buildSankeyData(){
+  const kind=document.getElementById('kind').value;
+  const resFilter=document.getElementById('resourceFilter').value;
+  const baseFilter=document.getElementById('baseFilter').value;
+
+  let sends = modules.filter(m=>m.kind==='send');
+  if(kind==='recv') sends = [];
+  if(resFilter) sends = sends.filter(s=>s.resourceId===resFilter);
+  if(baseFilter){
+    sends = sends.filter(s => s.baseId===baseFilter || s.destBaseId===baseFilter);
+  }
+
+  const recvById = new Map(modules.filter(m=>m.kind==='recv').map(m=>[m.id, m]));
+
+  const nodes = [];
+  const nodeIndex = new Map();
+  function addNode(key, label, type){
+    if(nodeIndex.has(key)) return nodeIndex.get(key);
+    const idx = nodes.length;
+    nodes.push({ key, name: label, type });
+    nodeIndex.set(key, idx);
+    return idx;
+  }
+
+  const links = [];
+  for(const s of sends){
+    const srcBase = getMarker(s.baseId);
+    const dstBase = getMarker(s.destBaseId);
+    const recv = s.destRecvId ? recvById.get(s.destRecvId) : null;
+
+    const qty = Number(s.qty ?? 1) || 1;
+
+    const nBaseSrc = addNode('B:'+ (srcBase?.id || s.baseId), srcBase?.name || 'Base ?', 'base');
+    const nSend    = addNode('S:'+ s.id, `📤 ${s.name||'Envoi'}`, 'send');
+    const nRecv    = addNode('R:'+ (recv?.id || ('?'+s.id)), recv ? `📥 ${recv.name||'Réception'}` : '📥 (réception ?)', 'recv');
+    const nBaseDst = addNode('D:'+ (dstBase?.id || s.destBaseId || ('?'+s.id)), dstBase?.name || 'Dest ?', 'base');
+
+    links.push({ source:nBaseSrc, target:nSend, value:qty, meta:{ sendId:s.id }});
+    links.push({ source:nSend, target:nRecv, value:qty, meta:{ sendId:s.id, recvId: recv?.id || null }});
+    links.push({ source:nRecv, target:nBaseDst, value:qty, meta:{ sendId:s.id, recvId: recv?.id || null, destBaseId: s.destBaseId || null }});
+  }
+
+  return { nodes, links };
+}
+
+function renderSankey(){
+  if(typeof d3 === 'undefined' || !d3.sankey) return;
+  const svg = d3.select('#sankeySvg');
+  svg.selectAll('*').remove();
+
+  const box = document.getElementById('sankeyBox');
+  const rect = box.getBoundingClientRect();
+  const width = Math.max(700, Math.floor(rect.width));
+  const height = Math.max(460, Math.floor(rect.height));
+  svg.attr('viewBox', `0 0 ${width} ${height}`);
+
+  const data = buildSankeyData();
+  if(!data.links.length){
+    svg.append('text')
+      .attr('x', 18).attr('y', 28)
+      .attr('fill', 'currentColor')
+      .style('font-family', "'Share Tech Mono',monospace")
+      .style('font-size', '10px')
+      .style('opacity', .6)
+      .text('— aucun flux (filtre trop strict ou aucune station d’envoi) —');
+    return;
+  }
+
+  const color = (d) => {
+    if(d.type==='send') return 'rgba(232,160,32,.55)';
+    if(d.type==='recv') return 'rgba(26,184,184,.55)';
+    return 'rgba(160,170,185,.45)';
+  };
+
+  const sankey = d3.sankey()
+    .nodeWidth(16)
+    .nodePadding(10)
+    .extent([[18, 44], [width-18, height-18]]);
+
+  const graph = sankey({
+    nodes: data.nodes.map(d => Object.assign({}, d)),
+    links: data.links.map(d => Object.assign({}, d))
+  });
+
+  svg.append('g')
+    .attr('fill', 'none')
+    .selectAll('path')
+    .data(graph.links)
+    .join('path')
+      .attr('d', d3.sankeyLinkHorizontal())
+      .attr('stroke', 'rgba(232,160,32,.22)')
+      .attr('stroke-width', d => Math.max(1, d.width))
+      .attr('stroke-opacity', 0.65)
+      .on('mousemove', (event, d) => {
+        const send = modules.find(m=>m.id===d.meta.sendId);
+        const srcBase = getMarker(send?.baseId);
+        const dstBase = getMarker(send?.destBaseId);
+        const recv = send?.destRecvId ? modules.find(m=>m.id===send.destRecvId) : null;
+        const res = getRes(send?.resourceId);
+        showTip(
+          `<div style="color:var(--amber);font-weight:700">Flux</div>
+           <div>${escapeHtml(srcBase?.name||'?')} → ${escapeHtml(send?.name||'envoi')} → ${escapeHtml(recv?.name||'réception ?')} → ${escapeHtml(dstBase?.name||'?')}</div>
+           <div style="margin-top:4px;opacity:.85">${escapeHtml(res.label)} · <b>${escapeHtml(String(send?.qty ?? '—'))}</b></div>`,
+          event.clientX, event.clientY
+        );
+      })
+      .on('mouseleave', hideTip)
+      .on('click', (event, d) => {
+        const id = d.meta.sendId;
+        if(id) location.href='/?selectModule='+encodeURIComponent(id);
+      });
+
+  const node = svg.append('g')
+    .selectAll('g')
+    .data(graph.nodes)
+    .join('g')
+      .attr('transform', d => `translate(${d.x0},${d.y0})`);
+
+  node.append('rect')
+      .attr('height', d => Math.max(6, d.y1 - d.y0))
+      .attr('width', d => d.x1 - d.x0)
+      .attr('rx', 3)
+      .attr('fill', d => color(d))
+      .attr('stroke', 'rgba(232,160,32,.18)')
+      .on('mousemove', (event, d) => {
+        showTip(`<div style="color:var(--amber);font-weight:700">${escapeHtml(d.name)}</div>
+                 <div style="opacity:.8">${escapeHtml(d.type)}</div>`, event.clientX, event.clientY);
+      })
+      .on('mouseleave', hideTip);
+
+  node.append('text')
+      .attr('x', d => (d.x0 < width/2) ? (d.x1 - d.x0 + 8) : -8)
+      .attr('y', d => (d.y1 - d.y0)/2)
+      .attr('dy', '0.35em')
+      .attr('text-anchor', d => (d.x0 < width/2) ? 'start' : 'end')
+      .style('font-family', "'Share Tech Mono',monospace")
+      .style('font-size', '10px')
+      .style('fill', 'currentColor')
+      .style('opacity', 0.9)
+      .text(d => d.name.length>28 ? d.name.slice(0,27)+'…' : d.name);
+}
+
+function render(){
+  const groupBy=document.getElementById('groupBy').value;
+  const kind=document.getElementById('kind').value;
+  const resFilter=document.getElementById('resourceFilter').value;
+  const baseFilter=document.getElementById('baseFilter').value;
+
+  let rows = flowRows();
+  if(kind!=='all') rows = rows.filter(r=>r.kind===kind);
+  if(resFilter) rows = rows.filter(r=>r.resourceId===resFilter);
+  if(baseFilter) rows = rows.filter(r=>getMarker(modules.find(m=>m.id===r.id)?.baseId)?.id===baseFilter || r.baseName===getMarker(baseFilter)?.name);
+
+  // sort deterministic
+  rows.sort((a,b)=>{
+    const ga=(groupBy==='base')?a.baseName:(groupBy==='resource')?a.resourceLabel:'';
+    const gb=(groupBy==='base')?b.baseName:(groupBy==='resource')?b.resourceLabel:'';
+    if(ga<gb) return -1; if(ga>gb) return 1;
+    if(a.kind!==b.kind) return a.kind==='send'?-1:1;
+    return a.moduleName.localeCompare(b.moduleName);
+  });
+
+  const tbody=document.querySelector('#tbl tbody');
+  tbody.innerHTML='';
+
+  if(rows.length===0){
+    document.getElementById('empty').style.display='block';
+    return;
+  }
+  document.getElementById('empty').style.display='none';
+
+  let lastGroup=null;
+  for(const r of rows){
+    const g=(groupBy==='base')?r.baseName:(groupBy==='resource')?r.resourceLabel:null;
+    if(g!==null && g!==lastGroup){
+      const tr=document.createElement('tr');
+      tr.className='group-row';
+      tr.innerHTML=`<td colspan="6">${escapeHtml(g)}</td>`;
+      tbody.appendChild(tr);
+      lastGroup=g;
+    }
+
+    const tr=document.createElement('tr');
+    tr.innerHTML = `
+      <td><span class="badge ${r.kind}">${r.kind==='send'?'📤 ENVOI':'📥 RECV'}</span></td>
+      <td>${escapeHtml(r.moduleName)}</td>
+      <td>${escapeHtml(r.baseName)}</td>
+      <td class="dim">${escapeHtml(r.destName)}</td>
+      <td>${escapeHtml(r.resourceLabel)}</td>
+      <td class="right">${escapeHtml(String(r.qty))}</td>
+    `;
+    tr.addEventListener('click',()=>{ location.href='/?selectModule='+encodeURIComponent(r.id); });
+    tbody.appendChild(tr);
+  }
+}
+
+['groupBy','kind','resourceFilter','baseFilter'].forEach(id=>{
+  document.getElementById(id).addEventListener('change',()=>{ render(); if(activeView==='sankey') renderSankey(); });
+});
+
+(async()=>{
+  try{
+    currentUser = await api.get('/api/auth/me');
+    applyTheme(currentUser.ui_theme||'dark');
+    document.getElementById('userTag').textContent='⬡ '+currentUser.username.toUpperCase();
+    if(currentUser.role==='admin') document.getElementById('adminLink').style.display='';
+
+    [RESOURCES, markers, modules] = await Promise.all([
+      api.get('/api/resources'),
+      api.get('/api/markers'),
+      api.get('/api/modules'),
+    ]);
+    modules = modules.map(m=>({
+      ...m,
+      baseId:m.base_id,
+      resourceId:m.resource_id,
+      destBaseId:m.dest_base_id,
+      destRecvId:m.dest_recv_id
+    }));
+
+    buildFilters();
+    render();
+  }catch{
+    location.href='/login?next='+encodeURIComponent('/sheet.html');
+  }
+})();
+</script>
+</body>
+</html>

@@ -38,7 +38,7 @@ router.post('/auth/login', (req, res) => {
   const token = signToken({ id: user.id, username: user.username, role: user.role });
   res
     .cookie('token', token, { httpOnly: true, sameSite: 'lax', maxAge: 7 * 86400 * 1000 })
-    .json({ token, user: { id: user.id, username: user.username, role: user.role } });
+    .json({ token, user: { id: user.id, username: user.username, role: user.role, ui_theme: user.ui_theme || 'dark', ui_show_base_labels: (user.ui_show_base_labels==null?1:user.ui_show_base_labels) } });
 });
 
 router.post('/auth/logout', requireAuth, (req, res) => {
@@ -47,7 +47,48 @@ router.post('/auth/logout', requireAuth, (req, res) => {
 });
 
 router.get('/auth/me', requireAuth, (req, res) => {
-  const user = db.prepare('SELECT id, username, role, created_at, last_login FROM users WHERE id = ?').get(req.user.id);
+  const user = db.prepare('SELECT id, username, role, ui_theme, ui_show_base_labels, created_at, last_login FROM users WHERE id = ?').get(req.user.id);
+  res.json(user);
+});
+
+// Update current user's UI preferences (safe, minimal surface)
+router.put('/auth/me', requireAuth, (req, res) => {
+  const { ui_theme, ui_show_base_labels } = req.body || {};
+
+  // Validate inputs (partial updates allowed)
+  const updates = [];
+  const params = [];
+
+  if (ui_theme !== undefined) {
+    if (!['dark', 'light'].includes(ui_theme)) {
+      return res.status(400).json({ error: "ui_theme invalide (dark|light)" });
+    }
+    updates.push('ui_theme = ?');
+    params.push(ui_theme);
+  }
+
+  if (ui_show_base_labels !== undefined) {
+    const v = (ui_show_base_labels === true) ? 1
+      : (ui_show_base_labels === false) ? 0
+      : (ui_show_base_labels === 1 || ui_show_base_labels === 0) ? ui_show_base_labels
+      : (ui_show_base_labels === '1' || ui_show_base_labels === '0') ? Number(ui_show_base_labels)
+      : null;
+    if (v === null) {
+      return res.status(400).json({ error: "ui_show_base_labels invalide (0|1)" });
+    }
+    updates.push('ui_show_base_labels = ?');
+    params.push(v);
+  }
+
+  if (updates.length === 0) {
+    return res.status(400).json({ error: "Aucune préférence fournie" });
+  }
+
+  params.push(req.user.id);
+  db.prepare(`UPDATE users SET ${updates.join(', ')} WHERE id = ?`).run(...params);
+  log(req, 'UPDATE_PREFS', req.user.id, { ui_theme, ui_show_base_labels });
+
+  const user = db.prepare('SELECT id, username, role, ui_theme, ui_show_base_labels, created_at, last_login FROM users WHERE id = ?').get(req.user.id);
   res.json(user);
 });
 

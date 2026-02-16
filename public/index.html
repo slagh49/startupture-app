@@ -14,6 +14,19 @@
   --text-primary:#c8cdd4;--text-dim:#4a5260;
   --border:#1e2430;--border-amber:rgba(232,160,32,0.3);
 }
+
+/* Light theme overrides (stored per-user) */
+body[data-theme="light"]{
+  --bg-void:#f3f5f8;
+  --bg-panel:#ffffff;
+  --bg-surface:#f6f8fb;
+  --bg-elevated:#eef2f7;
+  --text-primary:#1b2430;
+  --text-dim:#5d6a7a;
+  --border:#d6dee8;
+  --border-amber:rgba(232,160,32,0.35);
+  --amber-glow:rgba(232,160,32,0.10);
+}
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:var(--bg-void);color:var(--text-primary);font-family:'Rajdhani',sans-serif;font-size:14px;height:100vh;display:flex;flex-direction:column;overflow:hidden}
 
@@ -97,6 +110,15 @@ header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;ba
 .marker-pin.blueprint{background:rgba(32,100,220,.4);border-color:#4488ff;color:#88bbff}
 .marker-tooltip{position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:var(--bg-panel);border:1px solid var(--border-amber);border-radius:4px;padding:4px 8px;white-space:nowrap;font-family:'Rajdhani',sans-serif;font-size:11px;font-weight:600;color:var(--text-primary);pointer-events:none;opacity:0;transition:opacity .15s}
 .map-marker:hover .marker-tooltip{opacity:1}
+body[data-show-base-labels="0"] .marker-label{display:none}
+.toggle-row{display:flex;align-items:center;gap:8px;margin-top:10px;padding:6px 9px;background:var(--bg-surface);border:1px solid var(--border);border-radius:4px;color:var(--text-dim);font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:.06em;user-select:none;cursor:pointer}
+.toggle-row input{accent-color:var(--amber);cursor:pointer}
+.toggle-row span{color:var(--text-dim)}
+.toggle-row:hover{border-color:var(--border-amber);color:var(--text-primary)}
+.toggle-row:hover span{color:var(--text-primary)}
+
+.marker-label{position:absolute;left:50%;top:calc(100% + 2px);transform:translateX(-50%);background:var(--bg-panel);border:1px solid var(--border-amber);border-radius:4px;padding:2px 6px;white-space:nowrap;font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text-primary);opacity:.92;pointer-events:none}
+.map-marker:hover .marker-label{opacity:1}
 .pending-cross{position:absolute;width:16px;height:16px;border:1.5px solid var(--amber);border-radius:50%;transform:translate(-50%,-50%);pointer-events:none;z-index:30;animation:cpulse 1.5s ease-in-out infinite}
 @keyframes cpulse{0%,100%{box-shadow:0 0 0 0 rgba(232,160,32,.4)}50%{box-shadow:0 0 0 6px rgba(232,160,32,0)}}
 
@@ -187,7 +209,9 @@ header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;ba
   </div>
   <div class="header-right">
     <span class="user-tag" id="userTag"></span>
+    <a href="/sheet.html" class="btn-hdr" title="Tableur des flux">🧾 TABLEUR</a>
     <a href="/admin.html" class="btn-hdr" id="adminLink" style="display:none">⚙ ADMIN</a>
+    <button class="btn-hdr" id="themeToggle" title="Basculer thème">☀️/🌙</button>
     <button class="btn-hdr" id="logoutBtn">DÉCONNEXION</button>
     <div class="header-coords" id="headerCoords">X: — Y: —</div>
   </div>
@@ -206,6 +230,11 @@ header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;ba
         <button class="filter-btn" data-type="alien" style="--color:#a020c8"><span class="filter-icon">👾</span><span>Infestations</span><span class="filter-count" id="cnt-alien">0</span></button>
         <button class="filter-btn" data-type="blueprint" style="--color:#2064c8"><span class="filter-icon">📦</span><span>Blueprints</span><span class="filter-count" id="cnt-blueprint">0</span></button>
       </div>
+      <label class="toggle-row" title="Afficher/masquer les noms des bases sur la carte">
+        <input type="checkbox" id="toggleBaseLabels" checked>
+        <span>NOMS DE BASE</span>
+      </label>
+
     </div>
     <div class="sidebar-section grow">
       <div class="section-label">Marqueurs</div>
@@ -305,6 +334,8 @@ header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;ba
     <div class="panel-scroll" id="tabDetail" style="display:none">
       <div class="detail-empty" id="detailEmpty"><div class="de-icon">🛰️</div><div class="de-text">Sélectionnez un<br>marqueur pour<br>les détails</div></div>
       <div id="detailContent" style="display:none"></div>
+
+
     </div>
 
     <div class="flow-legend">
@@ -338,6 +369,8 @@ let currentFilter='all', pendingCoords=null;
 let selectedMarkerId=null, selectedModuleId=null;
 let modFilterResource='', modFilterKind='all';
 let currentUser=null;
+let currentTheme='dark';
+let currentShowBaseLabels=true;
 
 const TYPES={
   rupture:{icon:'☀️',label:'Zone Rupture',color:'#cc2222'},
@@ -358,6 +391,8 @@ document.getElementById('logoutBtn').addEventListener('click', async()=>{
 (async()=>{
   try{
     currentUser=await api.get('/api/auth/me');
+    applyTheme(currentUser.ui_theme||'dark');
+    applyShowBaseLabels(currentUser.ui_show_base_labels !== 0);
     document.getElementById('userTag').textContent='⬡ '+currentUser.username.toUpperCase();
     if(currentUser.role==='admin') document.getElementById('adminLink').style.display='';
     await loadAll();
@@ -366,6 +401,50 @@ document.getElementById('logoutBtn').addEventListener('click', async()=>{
     location.href='/login';
   }
 })();
+
+// ══ THEME (persisted in user profile) ══
+function applyTheme(theme){
+  currentTheme = (theme==='light') ? 'light' : 'dark';
+  document.body.dataset.theme = currentTheme;
+  document.getElementById('themeToggle').textContent = currentTheme==='light' ? '🌙' : '☀️';
+}
+
+document.getElementById('themeToggle').addEventListener('click', async()=>{
+  const next = currentTheme==='light' ? 'dark' : 'light';
+  applyTheme(next); // instant UI
+  try{
+    const u = await api.put('/api/auth/me', { ui_theme: next });
+    currentUser = u;
+    showToast('Thème: ' + (next==='light'?'clair':'sombre'));
+  }catch(e){
+    // Rollback on error
+    applyTheme(currentTheme==='light' ? 'dark' : 'light');
+    showToast('Erreur: thème non enregistré');
+  }
+});
+
+
+// ══ BASE LABELS (persisted in user profile) ══
+function applyShowBaseLabels(show){
+  currentShowBaseLabels = !!show;
+  document.body.dataset.showBaseLabels = currentShowBaseLabels ? '1' : '0';
+  const cb = document.getElementById('toggleBaseLabels');
+  if(cb) cb.checked = currentShowBaseLabels;
+}
+
+document.getElementById('toggleBaseLabels').addEventListener('change', async(e)=>{
+  const next = !!e.target.checked;
+  applyShowBaseLabels(next); // instant UI
+  try{
+    const u = await api.put('/api/auth/me', { ui_show_base_labels: next ? 1 : 0 });
+    currentUser = u;
+    showToast(next ? 'Noms de base: affichés' : 'Noms de base: masqués');
+  }catch(err){
+    // rollback
+    applyShowBaseLabels(!next);
+    showToast("Erreur: préférence non enregistrée");
+  }
+});
 
 // ══ LOAD ALL DATA ══
 async function loadAll(){
@@ -380,6 +459,15 @@ async function loadAll(){
   buildResourceSelect(document.getElementById('moduleResource'));
   populateBaseSelects();
   updateAll();
+
+  // Deep-link support (used by the separate "Tableur" page)
+  const q = new URLSearchParams(location.search);
+  const modId = q.get('selectModule');
+  if (modId) {
+    // Switch to module tab for context, then highlight
+    switchTab('module');
+    selectModule(modId);
+  }
 }
 
 // ══ RESOURCE HELPERS ══
@@ -604,8 +692,49 @@ function selectMarker(id){
       }).join('');
     }
   }
-  dc.innerHTML=`<div class="detail-type-tag" style="background:${t.color}22;border:1px solid ${t.color}55;color:${t.color}">${t.icon} ${t.label.toUpperCase()}</div><div class="detail-name">${m.name}</div><div class="detail-coords">📍 X:${Math.round(m.nx*1000)/10}% · Y:${Math.round(m.ny*1000)/10}%</div><div class="detail-desc">${m.description||'Aucune description.'}</div>${modsHtml}<div class="sep"></div><button class="btn-danger" data-del="${m.id}">🗑 SUPPRIMER CE MARQUEUR</button>`;
+  dc.innerHTML=`
+    <div class="detail-type-tag" style="background:${t.color}22;border:1px solid ${t.color}55;color:${t.color}">${t.icon} ${t.label.toUpperCase()}</div>
+
+    <div class="detail-name">${m.name}</div>
+    <div class="detail-coords">📍 X:${Math.round(m.nx*1000)/10}% · Y:${Math.round(m.ny*1000)/10}%</div>
+    <div class="detail-desc">${m.description||'Aucune description.'}</div>
+
+    <div class="sep"></div>
+    <div class="form-group">
+      <label class="form-label">Nom (éditable)</label>
+      <input class="form-input" id="editMarkerName" value="${escapeHtml(m.name)}">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Description</label>
+      <textarea class="form-textarea" id="editMarkerDesc">${escapeHtml(m.description||'')}</textarea>
+    </div>
+    <button class="btn-primary" id="btnSaveMarker">💾 ENREGISTRER</button>
+
+    ${modsHtml}
+    <div class="sep"></div>
+    <button class="btn-danger" data-del="${m.id}">🗑 SUPPRIMER CE MARQUEUR</button>
+  `;
+
+  dc.querySelector('#btnSaveMarker').addEventListener('click', async()=>{
+    const name=document.getElementById('editMarkerName').value.trim();
+    const description=document.getElementById('editMarkerDesc').value.trim();
+    if(!name){showToast('Nom requis');return;}
+    const updated=await api.put('/api/markers/'+m.id,{name,description,nx:m.nx,ny:m.ny});
+    markers=markers.map(x=>x.id===m.id?updated:x);
+    showToast('Marqueur mis à jour');
+    updateAll();
+    selectMarker(m.id);
+  });
   dc.querySelector('.btn-danger').addEventListener('click',()=>deleteMarker(m.id));
+}
+
+function escapeHtml(str){
+  return String(str)
+    .replaceAll('&','&amp;')
+    .replaceAll('<','&lt;')
+    .replaceAll('>','&gt;')
+    .replaceAll('"','&quot;')
+    .replaceAll("'",'&#39;');
 }
 
 function selectModule(id){
@@ -644,7 +773,8 @@ let imgW=1080,imgH=1080;
 function applyTransform(){
   mapWorld.style.transform=`translate(${panX}px,${panY}px) scale(${scale})`;
   document.getElementById('zoomLevel').textContent=Math.round(scale*100)+'%';
-  renderMarkersDOM(); renderFlows();
+  // Markers and flows are inside #mapWorld and already follow the transform.
+  // Re-render only when data/selection changes (updateAll/selectMarker/selectModule).
 }
 function fitMap(){
   const cw=mapContainer.offsetWidth,ch=mapContainer.offsetHeight;
@@ -678,7 +808,8 @@ function renderMarkersDOM(){
     el.className='map-marker'+(m.id===selectedMarkerId?' selected':'')+(hl?' highlighted':'');
     if(hl) el.style.setProperty('--hl-color',t.color);
     el.style.left=m.nx*imgW+'px'; el.style.top=m.ny*imgH+'px';
-    el.innerHTML='<div class="marker-pin '+m.type+'"><span>'+t.icon+'</span></div><div class="marker-tooltip">'+m.name+'</div>';
+    const baseLabel = (m.type==='base') ? '<div class="marker-label">'+escapeHtml(m.name)+'</div>' : '';
+    el.innerHTML='<div class="marker-pin '+m.type+'"><span>'+t.icon+'</span></div>'+baseLabel+'<div class="marker-tooltip">'+escapeHtml(m.name)+'</div>';
     el.addEventListener('click',e=>{e.stopPropagation();selectMarker(m.id);});
     markersOverlay.appendChild(el);
   });
@@ -713,6 +844,11 @@ function renderFlows(){
 
 // ══ TABS ══
 document.querySelectorAll('.tab-btn').forEach(btn=>btn.addEventListener('click',()=>switchTab(btn.dataset.tab)));
+// Tableur controls
+setTimeout(()=>{
+  const gb=document.getElementById('sheetGroupBy'); if(gb) gb.addEventListener('change',renderSheet);
+  const sk=document.getElementById('sheetKind'); if(sk) sk.addEventListener('change',renderSheet);
+},0);
 function switchTab(tab){
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));
   document.getElementById('tabMarker').style.display=tab==='marker'?'':'none';
@@ -721,8 +857,87 @@ function switchTab(tab){
   if(tab==='module') populateBaseSelects();
 }
 
+
+// ══ TABLEUR FLUX ══
+let sheetGroupBy='none';
+let sheetKind='all';
+
+function flowRows(){
+  const rows=[];
+  const byId=new Map(markers.map(m=>[m.id,m]));
+  for(const m of modules){
+    const base=byId.get(m.baseId);
+    const res=getRes(m.resourceId);
+    if(m.kind==='send'){
+      const dst=byId.get(m.destBaseId);
+      rows.push({kind:'send',module:m,moduleName:m.name||'(sans nom)',baseName:base?base.name:'?',destName:dst?dst.name:'?',resourceLabel:res.label,qty:(m.qty==null?'':m.qty)});
+    }else if(m.kind==='recv'){
+      rows.push({kind:'recv',module:m,moduleName:m.name||'(sans nom)',baseName:base?base.name:'?',destName:'—',resourceLabel:res.label,qty:'—'});
+    }
+  }
+  return rows;
+}
+
+function renderSheet(){
+  const tbl=document.getElementById('sheetTable');
+  if(!tbl) return;
+  const tbody=tbl.querySelector('tbody');
+  const empty=document.getElementById('sheetEmpty');
+  const gb=document.getElementById('sheetGroupBy');
+  const sk=document.getElementById('sheetKind');
+  if(gb) sheetGroupBy=gb.value;
+  if(sk) sheetKind=sk.value;
+
+  let rows=flowRows();
+  if(sheetKind!=='all') rows=rows.filter(r=>r.kind===sheetKind);
+
+  rows.sort((a,b)=>{
+    const ka=(sheetGroupBy==='base')?a.baseName:(sheetGroupBy==='resource')?a.resourceLabel:'';
+    const kb=(sheetGroupBy==='base')?b.baseName:(sheetGroupBy==='resource')?b.resourceLabel:'';
+    if(ka<kb) return -1; if(ka>kb) return 1;
+    if(a.kind<b.kind) return -1; if(a.kind>b.kind) return 1;
+    return a.moduleName.localeCompare(b.moduleName);
+  });
+
+  tbody.innerHTML='';
+  if(!rows.length){
+    empty.style.display='';
+    tbl.style.display='none';
+    return;
+  }
+  empty.style.display='none';
+  tbl.style.display='';
+
+  let lastGroup=null;
+  for(const r of rows){
+    const groupKey=(sheetGroupBy==='base')?r.baseName:(sheetGroupBy==='resource')?r.resourceLabel:null;
+    if(groupKey && groupKey!==lastGroup){
+      const trg=document.createElement('tr');
+      trg.innerHTML=`<td colspan="6" style="padding:6px 6px;border-bottom:1px solid var(--border);background:var(--bg-surface);color:var(--text-dim);letter-spacing:.12em;text-transform:uppercase">${escapeHtml(groupKey)}</td>`;
+      tbody.appendChild(trg);
+      lastGroup=groupKey;
+    }else if(!groupKey){
+      lastGroup=null;
+    }
+
+    const tr=document.createElement('tr');
+    tr.style.cursor='pointer';
+    tr.addEventListener('click',()=>selectModule(r.module.id));
+    const kindLabel=r.kind==='send'?'📤 ENVOI':'📥 RECV';
+    tr.innerHTML=`
+      <td style="padding:6px 6px;border-bottom:1px solid var(--border);color:var(--text-dim)">${kindLabel}</td>
+      <td style="padding:6px 6px;border-bottom:1px solid var(--border);font-weight:700">${escapeHtml(r.moduleName)}</td>
+      <td style="padding:6px 6px;border-bottom:1px solid var(--border)">${escapeHtml(r.baseName)}</td>
+      <td style="padding:6px 6px;border-bottom:1px solid var(--border)">${escapeHtml(r.destName)}</td>
+      <td style="padding:6px 6px;border-bottom:1px solid var(--border)">${escapeHtml(r.resourceLabel)}</td>
+      <td style="padding:6px 6px;border-bottom:1px solid var(--border);text-align:right">${escapeHtml(String(r.qty))}</td>
+    `;
+    tbody.appendChild(tr);
+  }
+}
+
 // ══ UPDATE ALL ══
-function updateAll(){ updateCounts(); renderMarkersDOM(); renderFlows(); renderList(); renderModuleList(); }
+function updateAll(){ updateCounts(); renderMarkersDOM(); renderFlows(); renderList(); renderModuleList(); if(document.getElementById('tabSheet') && document.getElementById('tabSheet').style.display!=='none'){ renderSheet(); } }
 
 // ══ TOAST ══
 let toastTimer;

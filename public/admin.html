@@ -14,6 +14,19 @@
   --text-primary:#c8cdd4;--text-dim:#4a5260;
   --border:#1e2430;--border-amber:rgba(232,160,32,0.3);
 }
+
+/* Light theme overrides (stored per-user) */
+body[data-theme="light"]{
+  --bg-void:#f3f5f8;
+  --bg-panel:#ffffff;
+  --bg-surface:#f6f8fb;
+  --bg-elevated:#eef2f7;
+  --text-primary:#1b2430;
+  --text-dim:#5d6a7a;
+  --border:#d6dee8;
+  --border-amber:rgba(232,160,32,0.35);
+  --amber-glow:rgba(232,160,32,0.10);
+}
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:var(--bg-void);color:var(--text-primary);font-family:'Rajdhani',sans-serif;font-size:14px;min-height:100vh;display:flex;flex-direction:column}
 
@@ -161,6 +174,7 @@ tr:hover td{background:var(--bg-elevated)}
   <div class="header-right">
     <span class="user-badge" id="userBadge"></span>
     <a href="/" class="btn-hdr">← Carte</a>
+    <button class="btn-hdr" id="themeToggle" title="Basculer thème">☀️/🌙</button>
     <button class="btn-hdr" id="logoutBtn">Déconnexion</button>
   </div>
 </header>
@@ -354,6 +368,7 @@ const api = {
 };
 
 let currentUser=null, allResources=[], allUsers=[], allLogs=[], logPage=0, logTotal=0;
+let currentTheme='dark';
 const LOG_PAGE_SIZE=50;
 
 // ══ INIT — session validée par le serveur (admin requis) ══
@@ -366,12 +381,33 @@ document.getElementById('logoutBtn').addEventListener('click', async()=>{
 (async()=>{
   try{
     currentUser=await api.get('/api/auth/me');
+    applyTheme(currentUser.ui_theme||'dark');
     document.getElementById('userBadge').textContent='⬡ '+currentUser.username.toUpperCase();
     await loadAll();
   }catch{
     location.href='/login';
   }
 })();
+
+// ══ THEME (persisted in user profile) ══
+function applyTheme(theme){
+  currentTheme = (theme==='light') ? 'light' : 'dark';
+  document.body.dataset.theme = currentTheme;
+  document.getElementById('themeToggle').textContent = currentTheme==='light' ? '🌙' : '☀️';
+}
+
+document.getElementById('themeToggle').addEventListener('click', async()=>{
+  const next = currentTheme==='light' ? 'dark' : 'light';
+  applyTheme(next);
+  try{
+    const u = await api.put('/api/auth/me', { ui_theme: next });
+    currentUser = u;
+    showToast('Thème: ' + (next==='light'?'clair':'sombre'));
+  }catch{
+    applyTheme(currentTheme==='light' ? 'dark' : 'light');
+    showToast('Erreur: thème non enregistré');
+  }
+});
 
 // ══ LOAD ALL ══
 async function loadAll(){

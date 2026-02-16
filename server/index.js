@@ -48,6 +48,9 @@ app.get('/', requirePageAuth, (req, res) => sendPage(res, 'index.html'));
 
 app.get('/index.html', requirePageAuth, (req, res) => sendPage(res, 'index.html'));
 
+// Flux spreadsheet (separate page)
+app.get('/sheet.html', requirePageAuth, (req, res) => sendPage(res, 'sheet.html'));
+
 app.get('/admin.html', requirePageAuth, (req, res) => {
   if (req.user.role !== 'admin') return res.set(noCache).redirect('/?err=forbidden');
   sendPage(res, 'admin.html');
@@ -67,6 +70,7 @@ app.use((req, res) => {
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`\n🌟 StarRupture Map Server`);
   console.log(`   Carte  → http://localhost:${PORT}`);
+  console.log(`   Tableur→ http://localhost:${PORT}/sheet.html`);
   console.log(`   Admin  → http://localhost:${PORT}/admin.html`);
   console.log(`   Login  → http://localhost:${PORT}/login\n`);
 });
